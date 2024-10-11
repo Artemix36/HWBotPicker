@@ -1,0 +1,58 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/wow/repos/Hardware-Picker-Bot/HardWarePickerBot/HardWarePickerBot.csproj": {}
+  },
+  "projects": {
+    "/Users/wow/repos/Hardware-Picker-Bot/HardWarePickerBot/HardWarePickerBot.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/wow/repos/Hardware-Picker-Bot/HardWarePickerBot/HardWarePickerBot.csproj",
+        "projectName": "HardWarePickerBot",
+        "projectPath": "/Users/wow/repos/Hardware-Picker-Bot/HardWarePickerBot/HardWarePickerBot.csproj",
+        "packagesPath": "/Users/wow/.nuget/packages/",
+        "outputPath": "/Users/wow/repos/Hardware-Picker-Bot/HardWarePickerBot/obj/",
+        "projectStyle": "PackageReference",
+        "skipContentFileWrite": true,
+        "configFilePaths": [
+          "/Users/wow/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net472"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {},
+          "https://pkgs.dev.azure.com/tgbots/Telegram.Bot/_packaging/release/nuget/v3/index.json": {}
+        },
+        "frameworks": {
+          "net472": {
+            "projectReferences": {}
+          }
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net472": {
+          "dependencies": {
+            "MySql.Data": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            },
+            "Telegram.Bot": {
+              "target": "Package",
+              "version": "[19.0.0, )"
+            }
+          }
+        }
+      }
+    }
+  }
+}
