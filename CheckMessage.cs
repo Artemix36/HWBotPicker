@@ -7,6 +7,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot;
 using HWpicker_bot;
 using System.Text.RegularExpressions;
+using Mysqlx;
 using System.Xml.Linq;
 
 namespace HardWarePickerBot

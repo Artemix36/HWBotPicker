@@ -11,6 +11,7 @@ using Telegram.Bot.Types;
 using System.Xml.Linq;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
+using Mysqlx;
 
 namespace HardWarePickerBot
 {
@@ -49,13 +50,13 @@ namespace HardWarePickerBot
                 return ("[ERROR] Ошибка при обращении к БД");
             }
         } //все сравнения
-        public async Task<string> GetComparasignByNameAsync(string name)
+        public async Task<string> GetComparasignByNameAsync(string name, string RequestedBy)
         {
             Console.WriteLine("[INFO] DB access..");
             if (name != null || name != "error"){
                 try
                 {
-                    var url = $"http://localhost:44321/DB.svc/Comparasign/Get/{name}";
+                    var url = $"http://localhost:44321/DB.svc/Comparasign/Get/{name},{RequestedBy}";
                     var msg = new HttpRequestMessage(HttpMethod.Get, url);
                     var res = await client.SendAsync(msg);
                     var content = await res.Content.ReadAsStringAsync();
@@ -81,14 +82,14 @@ namespace HardWarePickerBot
                 return "Не найдено имя";
             }
         } //по одному имени
-        public async Task<string> GetComparasignByTwoNamesAsync(string name1, string name2)
+        public async Task<string> GetComparasignByTwoNamesAsync(string name1, string name2, string AddedBy)
         {
             Console.WriteLine("[INFO] DB access..");
             if (name1 != null && name2 != null)
             {
                 try
                 {
-                    var url = $"http://localhost:44321/DB.svc/Comparasigns/Get/{name1},{name2}";
+                    var url = $"http://localhost:44321/DB.svc/Comparasigns/Get/{name1},{name2},{AddedBy}";
                     var msg = new HttpRequestMessage(HttpMethod.Get, url);
                     var res = await client.SendAsync(msg);
                     var content = await res.Content.ReadAsStringAsync();
@@ -125,6 +126,7 @@ namespace HardWarePickerBot
                     Phone1Name = checker.FixPhoneNameToUpper(newComparasign.Phone1Name),
                     Phone2Name = checker.FixPhoneNameToUpper(newComparasign.Phone2Name),
                     CompLink = newComparasign.CompLink,
+                    AddedBy = newComparasign.AddedBy,
                 };
                 string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(jsonObject);
                 var request = new StringContent(jsonString, Encoding.UTF8, "application/json");

@@ -35,6 +35,7 @@ namespace HWpicker_bot
             public string Phone2Name { get; set; }
             public string Phone2CameraSpec { get; set; }
             public string CompLink { get; set; }
+            public string AddedBy { get; set; }
         }
 
         CheckMessage checker = new CheckMessage();
@@ -47,16 +48,17 @@ namespace HWpicker_bot
             string link = checker.GetLink(message.Text);
             (newComparasign.Phone1Name, newComparasign.Phone2Name) = checker.GetAddComparasignName(message.Text);
 
-            if (newComparasign.Phone1Name != null && newComparasign.Phone2Name != null)
+            if (newComparasign.Phone1Name != null && newComparasign.Phone2Name != null && message.From.FirstName.Length  <= 10 && message.From.LastName.Length <= 10 && message.From.Username.Length <= 10)
             {
                 newComparasign.CompLink = link;
+                newComparasign.AddedBy = $"{message.From.FirstName} {message.From.LastName} | {message.From.Username}";
                 string answer = db.ComparasignAddAsync(newComparasign).Result;
                 await telegram_bot.SendTextMessageAsync(message.Chat.Id, answer);
             }
             else
             {
-                Console.WriteLine("[ERROR] Не удалось распарсить ссылку");
-                await telegram_bot.SendTextMessageAsync(message.Chat.Id, "Неверный входной формат");
+                Console.WriteLine("[ERROR] Не удалось распарсить ссылку или слишком длинное имя отправителя");
+                await telegram_bot.SendTextMessageAsync(message.Chat.Id, "Неверный входной формат или ваш ник и тэг занимают больше 30 символов");
             }
         }
 
@@ -81,7 +83,7 @@ namespace HWpicker_bot
             SpecWriter_HTTP specWriter_HTTP = new SpecWriter_HTTP();
             if (name1 != null && name2 != null)
             {
-                string answer = db.GetComparasignByTwoNamesAsync(name1,name2).Result;
+                string answer = db.GetComparasignByTwoNamesAsync(name1,name2,$"{message.From.FirstName} {message.From.LastName} | {message.From.Username}").Result;
                 try
                 {
                     if (!answer.Contains("ERROR"))
@@ -109,7 +111,7 @@ namespace HWpicker_bot
             }
             if (name2 == null && name1 != null)
             {
-                string answer = db.GetComparasignByNameAsync(name1).Result;
+                string answer = db.GetComparasignByNameAsync(name1, $"{message.From.FirstName} {message.From.LastName} | {message.From.Username}").Result;
                 try
                 {
                     if (!answer.Contains("ERROR"))
