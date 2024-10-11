@@ -10,5 +10,13 @@
 using System;
 using System.Reflection;
 
+[assembly: System.Reflection.AssemblyCompanyAttribute("HWPicker_NewDotNet")]
+[assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+05d23ce5915bd942f2f6fa64f3aef9548055a327")]
+[assembly: System.Reflection.AssemblyProductAttribute("HWPicker_NewDotNet")]
+[assembly: System.Reflection.AssemblyTitleAttribute("HWPicker_NewDotNet")]
+[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
+
 // Создано классом WriteCodeFragment MSBuild.
 

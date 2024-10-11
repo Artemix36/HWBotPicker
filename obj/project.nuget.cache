@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "H1Ydaj+VAT8=",
+  "dgSpecHash": "CtBGJvZmHI0=",
   "success": true,
-  "projectFilePath": "/Users/wow/repos/HWPicker_NewDotNet/HWPicker_NewDotNet.csproj",
+  "projectFilePath": "/Users/wow/repos/HWPickerBot-NewDotNet/HWPicker_NewDotNet.csproj",
   "expectedPackageFiles": [
     "/Users/wow/.nuget/packages/bouncycastle.cryptography/2.3.1/bouncycastle.cryptography.2.3.1.nupkg.sha512",
     "/Users/wow/.nuget/packages/google.protobuf/3.26.1/google.protobuf.3.26.1.nupkg.sha512",

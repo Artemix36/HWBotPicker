@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/wow/repos/HWPicker_NewDotNet/HWPicker_NewDotNet.csproj": {}
+    "/Users/wow/repos/HWPickerBot-NewDotNet/HWPicker_NewDotNet.csproj": {}
   },
   "projects": {
-    "/Users/wow/repos/HWPicker_NewDotNet/HWPicker_NewDotNet.csproj": {
+    "/Users/wow/repos/HWPickerBot-NewDotNet/HWPicker_NewDotNet.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/wow/repos/HWPicker_NewDotNet/HWPicker_NewDotNet.csproj",
+        "projectUniqueName": "/Users/wow/repos/HWPickerBot-NewDotNet/HWPicker_NewDotNet.csproj",
         "projectName": "HWPicker_NewDotNet",
-        "projectPath": "/Users/wow/repos/HWPicker_NewDotNet/HWPicker_NewDotNet.csproj",
+        "projectPath": "/Users/wow/repos/HWPickerBot-NewDotNet/HWPicker_NewDotNet.csproj",
         "packagesPath": "/Users/wow/.nuget/packages/",
-        "outputPath": "/Users/wow/repos/HWPicker_NewDotNet/obj/",
+        "outputPath": "/Users/wow/repos/HWPickerBot-NewDotNet/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/wow/.nuget/NuGet/NuGet.Config"
