@@ -13,7 +13,7 @@ using System.Reflection;
 // [assembly: System.Reflection.AssemblyCompanyAttribute("HWPicker_NewDotNet")]
 // [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 // [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-// [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+517ae5cce6cb7544fe35005e4886893ee9bb9b64")]
+// [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4aae48c50f0f6a701201e096692dc8e2e4e8fee1")]
 // [assembly: System.Reflection.AssemblyProductAttribute("HWPicker_NewDotNet")]
 // [assembly: System.Reflection.AssemblyTitleAttribute("HWPicker_NewDotNet")]
 // [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

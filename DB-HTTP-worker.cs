@@ -29,7 +29,7 @@ namespace HardWarePickerBot
             Console.WriteLine("[INFO] DB access..");
             try
             {
-                var url = "http://localhost:44321/DB.svc/Comparasign/Get";
+                var url = "http://localhost:5074/Comparasign/Get";
                 var msg = new HttpRequestMessage(HttpMethod.Get, url);
                 var res = await client.SendAsync(msg);
                 var content = await res.Content.ReadAsStringAsync();
@@ -56,7 +56,7 @@ namespace HardWarePickerBot
             if (name != null || name != "error"){
                 try
                 {
-                    var url = $"http://localhost:44321/DB.svc/Comparasign/Get/{name},{RequestedBy}";
+                    var url = $"http://localhost:5074/Comparasign/Get/{name},{RequestedBy}";
                     var msg = new HttpRequestMessage(HttpMethod.Get, url);
                     var res = await client.SendAsync(msg);
                     var content = await res.Content.ReadAsStringAsync();
@@ -89,7 +89,7 @@ namespace HardWarePickerBot
             {
                 try
                 {
-                    var url = $"http://localhost:44321/DB.svc/Comparasigns/Get/{name1},{name2},{AddedBy}";
+                    var url = $"http://localhost:5074/Comparasigns/Get/{name1},{name2},{AddedBy}";
                     var msg = new HttpRequestMessage(HttpMethod.Get, url);
                     var res = await client.SendAsync(msg);
                     var content = await res.Content.ReadAsStringAsync();
@@ -120,7 +120,7 @@ namespace HardWarePickerBot
             Console.WriteLine("[INFO] DB access..");
             try
             {
-                var url = $"http://localhost:44321/DB.svc/Comparasign/Add";
+                var url = $"http://localhost:5074/Comparasign/Add";
                 var jsonObject = new
                 {
                     Phone1Name = checker.FixPhoneNameToUpper(newComparasign.Phone1Name),
@@ -156,7 +156,7 @@ namespace HardWarePickerBot
             {
                 try
                 {
-                    var url = $"http://localhost:44321/DB.svc/CameraSpec/Get/{name}";
+                    var url = $"http://localhost:5074/CameraSpec/Get/{name}";
                     var msg = new HttpRequestMessage(HttpMethod.Get, url);
                     var res = await client.SendAsync(msg);
                     var content = await res.Content.ReadAsStringAsync();
@@ -190,7 +190,7 @@ namespace HardWarePickerBot
         {
             try
             {
-                var url = $"http://localhost:44321/DB.svc/CameraSpec/Add";
+                var url = $"http://localhost:5074/CameraSpec/Add";
                 var jsonObject = new
                 {
                     NameOfPhone = name,

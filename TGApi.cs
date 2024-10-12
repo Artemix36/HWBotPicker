@@ -29,11 +29,11 @@ namespace TelegramApi
             var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
             if (phoneComparisons.Length <= 1)
             {
-                telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения:\n\n<blockquote><b><u>{phoneComparisons[0].Phone1Name}</u></b> - <i>{phoneComparisons[0].Phone1CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2Name}</u></b> - <i>{phoneComparisons[0].Phone2CameraSpec}</i></blockquote>", reply: message.MessageId, buttons: comp_buttons);
+                telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения от пользователя {phoneComparisons[0].AddedBy}:\n<blockquote><b><u>{phoneComparisons[0].Phone1Name}</u></b> - <i>{phoneComparisons[0].Phone1CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2Name}</u></b> - <i>{phoneComparisons[0].Phone2CameraSpec}</i></blockquote>", reply: message.MessageId, buttons: comp_buttons);
             }
             else
             {
-                telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения:", reply: message.MessageId, buttons: comp_buttons);
+                telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения от пользователя {phoneComparisons[0].AddedBy}:", reply: message.MessageId, buttons: comp_buttons);
             }
         }
 
