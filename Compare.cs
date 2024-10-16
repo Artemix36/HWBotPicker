@@ -23,6 +23,7 @@ using System.Runtime.Serialization;
 using static System.Net.Mime.MediaTypeNames;
 using MySql.Data.MySqlClient;
 using System.Text.RegularExpressions;
+using System.ComponentModel;
 
 namespace HWpicker_bot
 {
@@ -53,7 +54,14 @@ namespace HWpicker_bot
                 newComparasign.CompLink = link;
                 newComparasign.AddedBy = $"{message.From.FirstName} {message.From.LastName} | {message.From.Username}";
                 string answer = db.ComparasignAddAsync(newComparasign).Result;
+                if(!answer.ToLower().Contains("error"))
+                {
                 await telegram_bot.SendTextMessageAsync(message.Chat.Id, answer);
+                }
+                else
+                {
+                tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Ошибка добавления! Сравнения можно добавлять раз в минуту и имена телефонов должны быть разными и уникальными!</b>", reply: message.MessageId);
+                }
             }
             else
             {

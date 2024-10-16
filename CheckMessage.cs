@@ -163,12 +163,12 @@ namespace HardWarePickerBot
         }
         internal (string,string,string,string,string,string,string) GetSpecs(string[] msg) //to be refactored
         {
-            string CPU = null;
-            string screen = null;
-            string Cameras = null;
-            string Battery = null;
-            string Reviews = null;
-            string MidPrice = null;
+            string CPU = "";
+            string screen = "";
+            string Cameras = "";
+            string Battery = "";
+            string Reviews = "";
+            string MidPrice = "";
             string description = GetDescription(msg);
 
             try
