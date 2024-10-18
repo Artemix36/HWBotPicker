@@ -34,6 +34,7 @@ namespace HW_picker_bot
 
         static void Main(string[] args)
         {
+            Console.WriteLine(")                    )           (   (             )     (     \n( /( (  (         (  ( /(   *   )   )\\ ))\\ )  (    ( /(     )\\ )\n)\\()))\\))(   '  ( )\\ )\\())` )  /(  (()/(()/(  )\\   )\\())(  (()/(  \n((_)\\((_)()\\ )   )((_|(_)\\  ( )(_))  /(_))(_)|((_)|((_)\\ )\\  /(_)) \n_((_)(())\\_)() ((_)_  ((_)(_(_())  (_))(_)) )\\___|_ ((_|(_)(_))\n| || \\ \\((_)/ /  | _ )/ _ \\|_   _|  | _ \\_ _((/ __| |/ /| __| _ \\  \n| __ |\\ \\/\\/ /   | _ \\ (_) | | |    |  _/| | | (__  ' < | _||   \n|_||_| \\_/\\_/    |___/\\___/  |_|    |_| |___| \\___|_|\\_\\|___|_|_\")");
             Thread StartListening = new Thread(Start_to_listen);
             StartListening.Start();
 
@@ -164,7 +165,7 @@ namespace HW_picker_bot
 
                 if (message.Text.ToLower().Contains("покажи сравнения"))
                 {
-                    comparator.comparasing_photo_read(telegram_bot, message);
+                    comparator.comparasing_photo_read(telegram_bot, message, $"{message.From.FirstName} {message.From.LastName} | {message.From.Username}");
                     return;
                 }
 
@@ -208,7 +209,7 @@ namespace HW_picker_bot
 
             if (message.Text.ToLower().Contains("покажи сравнение"))
                 {
-                    comparator.comparasing_find(telegram_bot, message);
+                    comparator.comparasing_find(telegram_bot, message, $"{message.From.FirstName} {message.From.LastName} | {message.From.Username}");
                     return;
                 }
         }

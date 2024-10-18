@@ -24,7 +24,7 @@ namespace HardWarePickerBot
             {
                 try
                 {
-                    string path = @"C:\token.txt";
+                    string path = $"{System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/token.txt";
                     try
                     {
                         string[] token = System.IO.File.ReadAllLines(path);//getting token

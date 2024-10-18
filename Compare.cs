@@ -70,28 +70,37 @@ namespace HWpicker_bot
             }
         }
 
-        public void comparasing_photo_read(ITelegramBotClient telegram_bot, Message message) //получениие всех сравнений
+        public void comparasing_photo_read(ITelegramBotClient telegram_bot, Message message, string RequestedBy) //получениие всех сравнений
         {
-            string answer = db.GetComparasignsAsync().Result;
+            string answer = db.GetComparasignsAsync(RequestedBy).Result;
             try
             {
+                if (!answer.Contains("ERROR"))
+                {
                 answer = answer.Replace("\\", "");
                 Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
                 tg.sendDataTable(telegram_bot, phoneComparisons, message);
+                }
+                else
+                {
+                tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены сравнения от этого пользователя!</b>\nЗапрос сравнений от создателя бота", reply: message.MessageId);
+                comparasing_photo_read(telegram_bot, message, "Artemix36");
+                }
+
             }
-            catch (Exception e) 
+            catch (Exception e)
             {
-                Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {e.Message}");
+                Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {answer} | {e.Message}");
             }
         }
 
-        public async void comparasing_find(ITelegramBotClient telegram_bot, Message message) //получение сравнений по имени телефонов
+        public async void comparasing_find(ITelegramBotClient telegram_bot, Message message, string RequestedBy) //получение сравнений по имени телефонов
         {
             (string name1, string name2) = checker.GetFindComparasignName(message.Text);
             SpecWriter_HTTP specWriter_HTTP = new SpecWriter_HTTP();
             if (name1 != null && name2 != null)
             {
-                string answer = db.GetComparasignByTwoNamesAsync(name1,name2,$"{message.From.FirstName} {message.From.LastName} | {message.From.Username}").Result;
+                string answer = db.GetComparasignByTwoNamesAsync(name1, name2, RequestedBy).Result;
                 try
                 {
                     if (!answer.Contains("ERROR"))
@@ -109,7 +118,8 @@ namespace HWpicker_bot
                     }
                     else
                     {
-                        await telegram_bot.SendTextMessageAsync(message.Chat.Id, answer.Replace("\"", ""));
+                        tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены сравнения от этого пользователя!</b>\nЗапрос сравнений от создателя бота", reply: message.MessageId);
+                        comparasing_find(telegram_bot, message, "Artemix36");
                     }
                 }
                 catch (Exception e)
@@ -119,7 +129,7 @@ namespace HWpicker_bot
             }
             if (name2 == null && name1 != null)
             {
-                string answer = db.GetComparasignByNameAsync(name1, $"{message.From.FirstName} {message.From.LastName} | {message.From.Username}").Result;
+                string answer = db.GetComparasignByNameAsync(name1, RequestedBy).Result;
                 try
                 {
                     if (!answer.Contains("ERROR"))
@@ -138,7 +148,8 @@ namespace HWpicker_bot
                     }
                     else
                     {
-                        await telegram_bot.SendTextMessageAsync(message.Chat.Id, answer);
+                        tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены сравнения от этого пользователя!</b>\nЗапрос сравнений от создателя бота", reply: message.MessageId);
+                        comparasing_find(telegram_bot, message, "Artemix36");
                     }
                 }
                 catch (Exception e)

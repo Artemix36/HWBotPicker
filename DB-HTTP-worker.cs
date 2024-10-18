@@ -24,12 +24,12 @@ namespace HardWarePickerBot
             public string cameraSpec { get; set; }
         }
         static private HttpClient client = new HttpClient();
-        public async Task<string> GetComparasignsAsync()
+        public async Task<string> GetComparasignsAsync(string RequestedBy)
         {
             Console.WriteLine("[INFO] DB access..");
             try
             {
-                var url = "http://localhost:5074/Comparasign/Get";
+                var url = $"http://localhost:5074/Comparasign/Get/{RequestedBy}";
                 var msg = new HttpRequestMessage(HttpMethod.Get, url);
                 var res = await client.SendAsync(msg);
                 var content = await res.Content.ReadAsStringAsync();
