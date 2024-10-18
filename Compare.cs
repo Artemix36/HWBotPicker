@@ -81,12 +81,15 @@ namespace HWpicker_bot
                 Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
                 tg.sendDataTable(telegram_bot, phoneComparisons, message);
                 }
-                else
+                if(answer.Contains("ERROR") && RequestedBy != "Ефим Казаков | Artemix36")
                 {
                 tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены сравнения от этого пользователя!</b>\nЗапрос сравнений от создателя бота", reply: message.MessageId);
                 comparasing_photo_read(telegram_bot, message, "Artemix36");
                 }
-
+                if(answer.Contains("ERROR") && RequestedBy == "Ефим Казаков | Artemix36")
+                {
+                tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: message.MessageId);
+                }
             }
             catch (Exception e)
             {
@@ -116,10 +119,14 @@ namespace HWpicker_bot
                         }
                         tg.sendDataTable(telegram_bot, phoneComparisons, message);
                     }
-                    else
+                    if(answer.Contains("ERROR") && RequestedBy != "Ефим Казаков | Artemix36")
                     {
                         tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены сравнения от этого пользователя!</b>\nЗапрос сравнений от создателя бота", reply: message.MessageId);
                         comparasing_find(telegram_bot, message, "Artemix36");
+                    }
+                    if(answer.Contains("ERROR") && RequestedBy == "Ефим Казаков | Artemix36")
+                    {
+                        tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: message.MessageId);
                     }
                 }
                 catch (Exception e)
