@@ -14,7 +14,7 @@ namespace HardWarePickerBot
 {
     public class CheckMessage
      {
-        static string[] startWords = { "pixel", "iphone", "huawei", "vivo", "xiaomi", "oppo", "oneplus", "samsung", "nothing" };
+        static string[] startWords = { "pixel", "iphone", "huawei", "vivo", "xiaomi", "oppo", "oneplus", "samsung", "nothing", "samsung galaxy" };
         public string FixPhoneNameToUpper(string name)
         {
             string[] words = name.Split(' ');
