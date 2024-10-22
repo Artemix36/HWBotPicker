@@ -18,7 +18,7 @@ namespace TelegramApi
 {
     internal class TGAPI
     {
-        public async void sendDataTable(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message)
+        public void sendDataTable(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message)
         {
             TGAPI telegram = new TGAPI();
             List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();

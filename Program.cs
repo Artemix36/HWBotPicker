@@ -97,7 +97,7 @@ namespace HW_picker_bot
  
             try
             {
-                if (update.Type == UpdateType.CallbackQuery)
+                if (update.Type == UpdateType.CallbackQuery && update.CallbackQuery is not null)
                 {
                     var callback = update.CallbackQuery;
                     ContextOfMsg messageWorker = MsgPool.getObj(update);
@@ -114,13 +114,13 @@ namespace HW_picker_bot
                         Console.WriteLine("Другой пользователь использует меню оценки");
                     }
                 }
-                if (update.Type == UpdateType.Message)
+                if (update.Type == UpdateType.Message && update.Message is not null)
                 {
                         var message = update.Message;
                         if (message.Text == null) return;
                         Console.WriteLine($"{telegram.getName(message).Item1} | {telegram.getName(message).Item2}");
 
-                        Thread CheckNewMessage = new Thread(() => ParseMessage(telegram_bot, message, update, token));
+                        Thread CheckNewMessage = new Thread(async () => await ParseMessage(telegram_bot, message, update, token));
                         CheckNewMessage.Start();
                         return;
                 }
@@ -137,7 +137,9 @@ namespace HW_picker_bot
             Program Program = new Program();
             Compare comparator = new Compare();
             TGAPI telegram = new TGAPI();
-
+            
+            if(message.Text is not null && message.From is not null)
+            {
                 if (message.Text.ToLower().Contains("миронов"))
                 {
                     telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "@ReversFlash25 купи 12су за 45к и в доставку!");
@@ -169,49 +171,51 @@ namespace HW_picker_bot
                     return;
                 }
 
-            if (message.Text.ToLower().Contains("добавь отзыв на") || message.Text.ToLower().Contains("добавить отзыв на"))
-            {
-                try
+                if (message.Text.ToLower().Contains("добавь отзыв на") || message.Text.ToLower().Contains("добавить отзыв на"))
                 {
-                    messageForCallback = message;
-                    CheckMessage checker = new CheckMessage();
-                    string name = checker.GetReviewName(message.Text);
-
-                    if (name != null)
+                    try
                     {
-                        string[] buttons = new string[] { "Общая оценка", "Система", "Камера", "Батарея", "Экран" };
+                        messageForCallback = message;
+                        CheckMessage checker = new CheckMessage();
+                        string name = checker.GetReviewName(message.Text);
 
-                        for (int i = 0; i < buttons.Length; i++)
+                        if (name != null)
                         {
-                            InlineKeyboardMarkup ikmReviews = (new[]
+                            string[] buttons = new string[] { "Общая оценка", "Система", "Камера", "Батарея", "Экран" };
+
+                            for (int i = 0; i < buttons.Length; i++)
                             {
-                                new []
+                                InlineKeyboardMarkup ikmReviews = (new[]
                                 {
-                                 InlineKeyboardButton.WithCallbackData(text: "1", callbackData: $"{buttons[i]}: 1"),
-                                 InlineKeyboardButton.WithCallbackData(text: "2", callbackData: $"{buttons[i]}: 2"),
-                                 InlineKeyboardButton.WithCallbackData(text: "3", callbackData: $"{buttons[i]}: 3"),
-                                 InlineKeyboardButton.WithCallbackData(text: "4", callbackData: $"{buttons[i]}: 4"),
-                                 InlineKeyboardButton.WithCallbackData(text: "5", callbackData: $"{buttons[i]}: 5"),
-                                },
-                             });
-                            await telegram_bot.SendTextMessageAsync(message.Chat.Id, $"{buttons[i]}:", replyMarkup: ikmReviews);
+                                    new []
+                                    {
+                                    InlineKeyboardButton.WithCallbackData(text: "1", callbackData: $"{buttons[i]}: 1"),
+                                    InlineKeyboardButton.WithCallbackData(text: "2", callbackData: $"{buttons[i]}: 2"),
+                                    InlineKeyboardButton.WithCallbackData(text: "3", callbackData: $"{buttons[i]}: 3"),
+                                    InlineKeyboardButton.WithCallbackData(text: "4", callbackData: $"{buttons[i]}: 4"),
+                                    InlineKeyboardButton.WithCallbackData(text: "5", callbackData: $"{buttons[i]}: 5"),
+                                    },
+                                });
+                                await telegram_bot.SendTextMessageAsync(message.Chat.Id, $"{buttons[i]}:", replyMarkup: ikmReviews);
+                            }
+                            ContextOfMsg messageWorker = MsgPool.getObj(update);
+                            messageWorker.SetValues(0, update, message);
                         }
-                        ContextOfMsg messageWorker = MsgPool.getObj(update);
-                        messageWorker.SetValues(0, update, message);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.ToString());
+                        telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "Ошибка при добавлении");
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                    telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "Ошибка при добавлении");
-                }
-            }
 
-            if (message.Text.ToLower().Contains("покажи сравнение"))
+                if (message.Text.ToLower().Contains("покажи сравнение"))
                 {
                     comparator.comparasing_find(telegram_bot, message, $"{message.From.FirstName} {message.From.LastName} | {message.From.Username}");
                     return;
                 }
+
+            }
         }
 
         static void ParseCallback(ITelegramBotClient telegram_bot, Update update, CancellationToken token)
@@ -220,26 +224,29 @@ namespace HW_picker_bot
 
             string[] buttons = new string[] { "Общая оценка", "Система", "Камера", "Батарея", "Экран" };
             var callback = update.CallbackQuery;
-            string data = callback.Data.ToString();
-            Console.WriteLine(counter);
-
-            for (int i = 0; i < 5; i++)
+            if(callback  is not null && callback.Data is not null)
             {
-                if (data.Contains(buttons[i]))
+                string data = callback.Data.ToString();
+                Console.WriteLine(counter);
+
+                for (int i = 0; i < 5; i++)
                 {
-                    data = data.Replace(buttons[i] + ":", "");
-                    int.TryParse(data, out rate[i]);
-                    counter++;
+                    if (data.Contains(buttons[i]))
+                    {
+                        data = data.Replace(buttons[i] + ":", "");
+                        int.TryParse(data, out rate[i]);
+                        counter++;
+                    }
                 }
-            }
 
-            if (counter == 5) {
-                counter = 0;
-                messageForCallback = null;
-            }
-            else
-            {
-                telegram_bot.SendTextMessageAsync(update.Id, "Потерян контекст или кто то нажал кнопки за вас");
+                if (counter == 5) {
+                    counter = 0;
+                    messageForCallback = null;
+                }
+                else
+                {
+                    telegram_bot.SendTextMessageAsync(update.Id, "Потерян контекст или кто то нажал кнопки за вас");
+                }
             }
         }
 
@@ -256,13 +263,19 @@ namespace HW_picker_bot
 
         public bool isCallBackFromSameGuy(Update update2)
         {
-            var msg = update.Message.From;
-            var msg2 = update2.CallbackQuery.From;
-            TGAPI tg = new TGAPI();
+            if(update is not null && update.Message is not null && update2 is not null && update2.CallbackQuery is not null){
+                var msg = update.Message.From;
+                var msg2 = update2.CallbackQuery.From;
+                TGAPI tg = new TGAPI();
 
-            if (tg.getCallbackName(msg).Item2 == tg.getCallbackName(msg2).Item2)
-            {
-                return true;
+                if (tg.getCallbackName(msg).Item2 == tg.getCallbackName(msg2).Item2)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
             else
             {
@@ -283,27 +296,30 @@ namespace HW_picker_bot
             //Phone_Menu pm = new Phone_Menu();
             string[] buttons = new string[] { "Общая оценка", "Система", "Камера", "Батарея", "Экран" };
             var callback = update.CallbackQuery;
-            string data = callback.Data.ToString();
-
-            for (int i = 0; i < 5; i++)
+            if(callback is not null && callback.Data is not null)
             {
-                if (data.Contains(buttons[i]))
+                string data = callback.Data.ToString();
+
+                for (int i = 0; i < 5; i++)
                 {
-                    data = data.Replace(buttons[i] + ":", "");
-                    int.TryParse(data, out rate[i]);
-                    counter++;
+                    if (data.Contains(buttons[i]))
+                    {
+                        data = data.Replace(buttons[i] + ":", "");
+                        int.TryParse(data, out rate[i]);
+                        counter++;
+                    }
                 }
-            }
 
-            if (counter == 5)
-            {
-                counter = 0;
-                //pm.PhoneReview(telegram_bot, rate, messageForCallback, update);
-                messageForCallback = null;
-            }
-            else
-            {
-                telegram_bot.SendTextMessageAsync(update.Id, "Потерян контекст или кто то нажал кнопки за вас");
+                if (counter == 5)
+                {
+                    counter = 0;
+                    //pm.PhoneReview(telegram_bot, rate, messageForCallback, update);
+                    messageForCallback = null;
+                }
+                else
+                {
+                    telegram_bot.SendTextMessageAsync(update.Id, "Потерян контекст или кто то нажал кнопки за вас");
+                }
             }
         }
 

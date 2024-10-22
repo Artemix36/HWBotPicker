@@ -37,16 +37,26 @@ namespace HWpicker_bot
             public string Phone2CameraSpec { get; set; }
             public string CompLink { get; set; }
             public string AddedBy { get; set; }
+
+/*             public Comparasign(string Phone1Name, string Phone1CameraSpec, string Phone2Name, string Phone2CameraSpec, string CompLink, string AddedBy){
+                Phone1Name = "";
+                Phone1CameraSpec = "";
+                Phone2Name = "";
+                Phone2CameraSpec = "";
+                CompLink = "";
+                AddedBy = "";
+            } */
         }
 
         CheckMessage checker = new CheckMessage();
         DB_HTTP_worker db = new DB_HTTP_worker();
         TGAPI tg = new TGAPI();
 
-        public async void comparasing_photo_write(ITelegramBotClient telegram_bot, Message message) //добавление сравнения
+        public async void comparasing_photo_write(ITelegramBotClient telegram_bot, Message? message) //добавление сравнения
         {
             Comparasign newComparasign = new Comparasign();
 
+            if(message is not null){
             string link = checker.GetLink(message.Text);
             (newComparasign.Phone1Name, newComparasign.Phone2Name) = checker.GetAddComparasignName(message.Text);
 
@@ -70,6 +80,7 @@ namespace HWpicker_bot
             {
                 Console.WriteLine("[ERROR] Не удалось распарсить ссылку или слишком длинное имя отправителя");
                 tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[INPUT ERROR]</blockquote><b>Ошибка добавления!\nПравила добавления сравнений:</b>\n-[phone1] vs [phone2] [link]\n-Разрешенные наименования моделей: pixel, iphone, huawei, vivo, xiaomi, oppo, oneplus, samsung, nothing\n-Может быть ваш ник и тэг занимают больше 30 символов?", reply: message.MessageId);
+            }
             }
         }
 
