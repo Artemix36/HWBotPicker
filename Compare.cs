@@ -46,6 +46,7 @@ namespace HWpicker_bot
         public async void comparasing_photo_write(ITelegramBotClient telegram_bot, Message message) //добавление сравнения
         {
             Comparasign newComparasign = new Comparasign();
+
             string link = checker.GetLink(message.Text);
             (newComparasign.Phone1Name, newComparasign.Phone2Name) = checker.GetAddComparasignName(message.Text);
 
@@ -53,7 +54,9 @@ namespace HWpicker_bot
             {
                 newComparasign.CompLink = link;
                 newComparasign.AddedBy = $"{message.From.FirstName} {message.From.LastName} | {message.From.Username}";
+
                 string answer = db.ComparasignAddAsync(newComparasign).Result;
+
                 if(!answer.ToLower().Contains("error"))
                 {
                 await telegram_bot.SendTextMessageAsync(message.Chat.Id, answer);
@@ -66,7 +69,7 @@ namespace HWpicker_bot
             else
             {
                 Console.WriteLine("[ERROR] Не удалось распарсить ссылку или слишком длинное имя отправителя");
-                await telegram_bot.SendTextMessageAsync(message.Chat.Id, "Неверный входной формат или ваш ник и тэг занимают больше 30 символов");
+                tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[INPUT ERROR]</blockquote><b>Ошибка добавления!\nПравила добавления сравнений:</b>\n-[phone1] vs [phone2] [link]\n-Разрешенные наименования моделей: pixel, iphone, huawei, vivo, xiaomi, oppo, oneplus, samsung, nothing\n-Может быть ваш ник и тэг занимают больше 30 символов?", reply: message.MessageId);
             }
         }
 
@@ -101,6 +104,7 @@ namespace HWpicker_bot
         {
             (string name1, string name2) = checker.GetFindComparasignName(message.Text);
             SpecWriter_HTTP specWriter_HTTP = new SpecWriter_HTTP();
+
             if (name1 != null && name2 != null)
             {
                 string answer = db.GetComparasignByTwoNamesAsync(name1, name2, RequestedBy).Result;
@@ -108,8 +112,7 @@ namespace HWpicker_bot
                 {
                     if (!answer.Contains("ERROR"))
                     {
-                        answer = answer.Replace("\\", "");
-                        Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
+                        Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Replace("\\", "").Trim('"'));
                         await specWriter_HTTP.FindAndWriteSpecs(phoneComparisons[0].Phone1Name, phoneComparisons[0].Phone2Name);
                         (string Spec1, string Spec2) = await specWriter_HTTP.FindAndWriteSpecs(phoneComparisons[0].Phone1Name, phoneComparisons[0].Phone2Name);
                         if (!Spec1.Contains("ERROR") && !Spec2.Contains("ERROR"))
@@ -168,7 +171,7 @@ namespace HWpicker_bot
                     Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {e.Message}");
                 }
             }
-            if(name1 == null && name2 == null)
+            if (name1 == null && name2 == null)
             {
                 tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Неверно введено имя сравнения! Проверьте синтаксис!</b>", reply: message.MessageId);
             }

@@ -9,15 +9,17 @@ using HWpicker_bot;
 using System.Text.RegularExpressions;
 using Mysqlx;
 using System.Xml.Linq;
+using TelegramApi;
 
 namespace HardWarePickerBot
 {
     public class CheckMessage
      {
-        static string[] startWords = { "pixel", "iphone", "huawei", "vivo", "xiaomi", "oppo", "oneplus", "samsung", "nothing", "samsung galaxy" };
-        public string FixPhoneNameToUpper(string name)
+        static string[] startWords = { "pixel", "iphone", "huawei", "vivo", "xiaomi", "oppo", "oneplus", "samsung", "nothing", "samsung galaxy", "samsung galaxy note"};
+        public string FixPhoneNameToUpper(string name)//Исправление написания регистра имени телефона
         {
             string[] words = name.Split(' ');
+            string answer = "";
             for (int i = 0; i < words.Length; i++)
             {
                 char[] letters = words[i].ToCharArray();
@@ -31,14 +33,45 @@ namespace HardWarePickerBot
                 }
                 words[i] = new string(letters);
             }
-            string answer = null;
             for(int i = 0; i<words.Length; i++)
             {
                 answer = answer + words[i] + " ";
             }
-            return answer;
+            return answer.Trim(' ');
         }
-        public (string, string) GetAddComparasignName(string msg) //получение имени сравнения при добавлении
+        public string CompareLevDistance(string name)//исправление имен телефонов если есть опечатки
+        {
+            TGAPI tg = new TGAPI();
+            string answer = "";
+            try
+            {
+                string[] words = name.Split(" ");
+                for(int h = 0; h<words.Length; h++)
+                {
+                    for(int i = 0; i<startWords.Length; i++)
+                    {
+                        if(tg.levDistance(words[h], startWords[i]) > 0 && tg.levDistance(words[h], startWords[i]) < 35)
+                        {
+                            answer = $"{startWords[i]} ";
+                            for(int j = 1; j<words.Length; j++)
+                            {
+                                answer = answer + $"{words[j]} ";
+                            }
+                            Console.WriteLine($"[INFO] Заменена опечатка {words[h]} на правильное название {startWords[i]} получена строка {answer}");
+                            return answer.Trim(' ');
+                            break;
+                        };
+                    }
+                }
+                return name.Trim(' ');
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"[ERROR] ошибка при попытке исправления опечатки {ex.Message} {ex.StackTrace} {ex.ToString()}");
+                return name;
+            }
+        }
+        public (string, string) GetAddComparasignName(string msg)//получение имени сравнения при добавлении
         {
             string patternEasy = @"^(добавить ссылку|добавь ссылку|добавить сравнение|добавь сравнение)\s+(.+?)\s+vs\s+(.+?)(?=https?:\/\/(?:photos\.google\.com\/(?:share|album)\/|photos\.app\.goo\.gl\/))";
             Regex regexEasy = new Regex(patternEasy);
@@ -46,9 +79,9 @@ namespace HardWarePickerBot
 
             if (MatchEasy.Success)
             {
-                string name1 = MatchEasy.Groups[2].Value.Trim(' ');
-                string name2 = MatchEasy.Groups[3].Value.Trim(' ');
-
+                string name1 = CompareLevDistance(MatchEasy.Groups[2].Value.Trim(' ')).Trim(' ');
+                string name2 = CompareLevDistance(MatchEasy.Groups[3].Value.Trim(' ')).Trim(' ');
+                
                 string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
                 Regex regex = new Regex(pattern);
 
@@ -78,9 +111,9 @@ namespace HardWarePickerBot
 
             if (MatchEasy.Groups[1].Success && MatchEasy.Groups[2].Success) 
             {
-                if (regex.IsMatch(MatchEasy.Groups[1].Value.ToLower()) && regex.IsMatch(MatchEasy.Groups[2].Value.ToLower()))
+                if (regex.IsMatch(CompareLevDistance(MatchEasy.Groups[1].Value.ToLower())) && regex.IsMatch(CompareLevDistance(MatchEasy.Groups[2].Value.ToLower())))
                 {
-                    return (MatchEasy.Groups[1].Value, MatchEasy.Groups[2].Value);
+                    return (CompareLevDistance(MatchEasy.Groups[1].Value), CompareLevDistance(MatchEasy.Groups[2].Value));
                 }
                 else
                 {
@@ -88,9 +121,9 @@ namespace HardWarePickerBot
                     return (null, null);
                 }
             }
-            else if(regex.IsMatch(MatchEasy.Groups[1].Value.ToLower()))
+            else if(regex.IsMatch(CompareLevDistance(MatchEasy.Groups[1].Value.ToLower())))
             {
-                return(MatchEasy.Groups[1].Value, null);
+                return(CompareLevDistance(MatchEasy.Groups[1].Value), null);
             }
             else
             {
@@ -117,139 +150,6 @@ namespace HardWarePickerBot
             {
                 return "error";
             }
-        }
-        internal string GetDescription(string[] msg) //to be refactored
-        {
-                string description = null;
-
-                for (int i = 0; i < msg.Length; i++)
-                {
-                    msg[i] = msg[i].Replace("\n", "");
-                }
-
-                int wordCounter = 0;
-            try
-            {
-                for (int i = 0; i < msg.Length; i++)
-                {
-
-                    if (msg[i] == "Описание:")
-                    {
-                        i++;
-                        while (!msg[i].Contains(";"))
-                        {
-                            description = description + msg[i] + " ";
-                            i++;
-                            wordCounter++;
-                        }
-                        msg[i] = msg[i].Trim(';');
-                        description = description + msg[i] + " ";
-                    }
-                }
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine($"Пусто {e.Message}");
-                return null;
-            }
-                if (wordCounter < 10 && wordCounter>0)
-                {
-                    return description;
-                }
-                else
-                {       
-                    return null;
-                }
-        }
-        internal (string,string,string,string,string,string,string) GetSpecs(string[] msg) //to be refactored
-        {
-            string CPU = "";
-            string screen = "";
-            string Cameras = "";
-            string Battery = "";
-            string Reviews = "";
-            string MidPrice = "";
-            string description = GetDescription(msg);
-
-            try
-            {
-                for (int i = 0; i < msg.Length; i++)
-                {
-                    if (msg[i].Contains("Процессор:"))
-                    {
-                        i++;
-                        while (!msg[i].Contains(';'))
-                        {
-                            CPU = CPU + msg[i] + " ";
-                            i++;
-                        }
-                        msg[i] = msg[i].Trim(new char[] { ' ', ';' });
-                        CPU = CPU + msg[i];
-                    }
-                    if (msg[i].Contains("Экран:"))
-                    {
-                        i++;
-                        while (!msg[i].Contains(';'))
-                        {
-                            screen = screen + msg[i] + " ";
-                            i++;
-                        }
-                        msg[i] = msg[i].Trim(new char[] { ' ', ';' });
-                        screen = screen + msg[i];
-                    }
-                    if (msg[i].Contains("Камера:"))
-                    {
-                        i++;
-                        while (!msg[i].Contains(';'))
-                        {
-                            Cameras = Cameras + msg[i] + " ";
-                            i++;
-                        }
-                        msg[i] = msg[i].Trim(new char[] { ' ', ';' });
-                        Cameras = Cameras + msg[i];
-                    }
-                    if (msg[i].Contains("Батарея:"))
-                    {
-                        i++;
-                        while (!msg[i].Contains(';'))
-                        {
-                            Battery = Battery + msg[i] + " ";
-                            i++;
-                        }
-                        msg[i] = msg[i].Trim(new char[] { ' ', ';' });
-                        Battery = Battery + msg[i];
-                    }
-                    if (msg[i].Contains("Отзывы:"))
-                    {
-                        i++;
-                        while (!msg[i].Contains(';'))
-                        {
-                            Reviews = Reviews + msg[i] + " ";
-                            i++;
-                        }
-                        msg[i] = msg[i].Trim(new char[] { ' ', ';' });
-                        Reviews = Reviews + msg[i];
-                    }
-                    if (msg[i].Contains("Средняя") && msg[i+1].Contains("цена:"))
-                    {
-                        i++;
-                        i++;
-                        while (!msg[i].Contains(';'))
-                        {
-                            MidPrice = MidPrice + msg[i] + " ";
-                            i++;
-                        }
-                        msg[i] = msg[i].Trim(new char[] { ' ', ';' });
-                        MidPrice = MidPrice + msg[i];
-                    }
-                }
-            }
-            catch {
-                Console.WriteLine("Неверно заполнено");
-                return (null, null, null, null, null, null, null);
-            }
-
-            return (CPU, screen,Cameras, Battery ,Reviews, MidPrice, description);
         }
         internal int GetRate(string[] msg) //to be reviewed
         {
