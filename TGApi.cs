@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using HWpicker_bot;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Requests;
@@ -87,6 +88,55 @@ namespace TelegramApi
             return (name, id);
         }
 
+        public void SendUserLog(string answer, string module, ITelegramBotClient bot, Message message)
+        {
+            Compare compare = new Compare();
+            if(module == "write_comp")
+            {
+                if(answer.Contains("[INPUT ERROR]"))
+                {
+                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[INPUT ERROR]</blockquote><b>\nПравила добавления сравнений:</b>\n-[phone1] vs [phone2] [link]\n-Разрешенные наименования моделей: pixel, iphone, huawei, vivo, xiaomi, oppo, oneplus, samsung, nothing\n-Может быть ваш ник и тэг занимают больше 30 символов?", reply: message.MessageId);
+                }
+                if(answer.Contains("[SUCCESS]"))
+                {
+                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[SUCCESS]</blockquote><b>{answer.Replace("[SUCCESS] ", "")}</b>", reply: message.MessageId);
+                }
+                if(answer.Contains("[ERROR]"))
+                {
+                    sendMessage(bot, "text",message.Chat.Id, text: $"<blockquote>[USER ERROR]</blockquote><b>{answer.Replace("[ERROR] ", "")}</b>", reply: message.MessageId);
+                }
+            }
+            if(module == "read_all_comp")
+            {
+                if(answer.Contains("ERROR") && message.From.Username != "Artemix36")
+                {
+                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены сравнения от этого пользователя!</b>\nЗапрос сравнений от создателя бота", reply: message.MessageId);
+                    compare.comparasing_photo_read(bot, message, "Artemix36");
+                }
+                if(answer.Contains("ERROR") && message.From.Username == "Artemix36")
+                {
+                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Сравнения не найдены</b>", reply: message.MessageId);
+                }
+            }
+            if(module == "read_comp")
+            {
+                if(answer.Contains("ERROR") && message.From.Username != "Artemix36")
+                {
+                    Console.WriteLine(answer);
+                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены сравнения от этого пользователя!</b>\nЗапрос сравнений от создателя бота", reply: message.MessageId);
+                    compare.comparasing_find(bot, message, "Artemix36");
+                }
+                if(answer.Contains("ERROR") && message.From.Username == "Artemix36")
+                {
+                    Console.WriteLine(answer);
+                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: message.MessageId);
+                }
+                if(answer.Contains("BAD NAMES"))
+                {
+                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Неверно введено имя сравнения или телефонов! Проверьте синтаксис!</b>", reply: message.MessageId);
+                }
+            }
+        }
         public int levDistance(String sRow, String sCol) // 0 - same strings, 100 - totally different
         {
             int RowLen = sRow.Length;

@@ -14,7 +14,7 @@ namespace HardWarePickerBot
     {
         static private HttpClient client = new HttpClient();
         DB_HTTP_worker db = new DB_HTTP_worker(); 
-        public async Task<(string, string)>FindAndWriteSpecs(string name1, string name2) //интеграция с GsmArenaBot
+        public async Task<(string?, string?)>FindAndWriteSpecs(string name1, string name2) //интеграция с GsmArenaBot
         {
             string Spec1 = await db.GetCameraSpec(name1);
             string Spec2 = await db.GetCameraSpec(name2);

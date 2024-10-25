@@ -24,9 +24,9 @@ namespace HardWarePickerBot
             public string cameraSpec { get; set; }
         }
         static private HttpClient client = new HttpClient();
-        public async Task<string> GetComparasignsAsync(string RequestedBy)
+        public async Task<string> GetComparasignsAsync(string RequestedBy) //все сравнения
         {
-            Console.WriteLine("[INFO] DB access..");
+            Console.WriteLine($"[INFO] Обращение в БД за всеми сравнениями от {RequestedBy}..");
             try
             {
                 var url = $"http://localhost:5074/Comparasign/Get/{RequestedBy}";
@@ -49,10 +49,10 @@ namespace HardWarePickerBot
                 Console.WriteLine(ex.Message);
                 return ("[ERROR] Ошибка при обращении к БД");
             }
-        } //все сравнения
-        public async Task<string> GetComparasignByNameAsync(string name, string RequestedBy)
+        }
+        public async Task<string> GetComparasignByNameAsync(string name, string RequestedBy) //по одному имени
         {
-            Console.WriteLine("[INFO] DB access..");
+            Console.WriteLine($"[INFO] Обращение в базу данных для поиска сравнения по имени от {RequestedBy}..");
             if (name != null || name != "error"){
                 try
                 {
@@ -81,10 +81,10 @@ namespace HardWarePickerBot
             {
                 return "Не найдено имя";
             }
-        } //по одному имени
-        public async Task<string> GetComparasignByTwoNamesAsync(string name1, string name2, string AddedBy)
+        } 
+        public async Task<string> GetComparasignByTwoNamesAsync(string name1, string name2, string AddedBy) //по двум именам
         {
-            Console.WriteLine("[INFO] DB access..");
+            Console.WriteLine($"[INFO] Обращение в базу данных для получения сравнения по двум именам от {AddedBy}..");
             if (name1 != null && name2 != null)
             {
                 try
@@ -114,10 +114,10 @@ namespace HardWarePickerBot
             {
                 return "Не найдено имя";
             }
-        }  //по двум именам
-        public async Task<string> ComparasignAddAsync(Comparasign newComparasign)
+        }
+        public async Task<string> ComparasignAddAsync(Comparasign newComparasign) //добавить сравнение
         {
-            Console.WriteLine("[INFO] DB access..");
+            Console.WriteLine($"[INFO] Обращение в базу данных для записи нового сравнения от {newComparasign.AddedBy}...");
             try
             {
                 var url = $"http://localhost:5074/Comparasign/Add";
@@ -146,12 +146,12 @@ namespace HardWarePickerBot
             catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] Ошибка при добавлении сравнениий {ex.Message} StackTrace {ex.StackTrace}");
-                return ("[ERROR] Ошибка при обращении к БД");
+                return "[ERROR] Ошибка при обращении к БД";
             }
-        }  //добавить сравнение
-        public async Task<string> GetCameraSpec(string name)
+        }
+        public async Task<string> GetCameraSpec(string name) //Получаем есть ли характеристики камеры в БД
         {
-            Console.WriteLine("[INFO] DB access..");
+            Console.WriteLine("[INFO] Обращение в БД для поиска Характеристик Камер..");
             if (name != null)
             {
                 try
@@ -185,9 +185,10 @@ namespace HardWarePickerBot
             {
                 return null;
             }
-        } //Получаем есть ли характеристики камеры в БД
-        public async Task<string> AddSpec(string name, string specs)
+        }
+        public async Task<string> AddSpec(string name, string specs) //Добавление характеристик камер в БД
         {
+            Console.WriteLine($"[INFO] Обращение в БД для добавления характеристик камеры {name}");
             try
             {
                 var url = $"http://localhost:5074/CameraSpec/Add";
@@ -215,7 +216,7 @@ namespace HardWarePickerBot
             {
                 Console.WriteLine($"[ERROR] Ошибка при записи характеристик камер { ex.Message}");
                 return ($"[ERROR] Ошибка при записи характеристик камер");
-            } //добавить хар-ки камеры
-        } //Добавление характеристик камер в БД
+            } 
+        }
     }
 }

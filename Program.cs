@@ -29,22 +29,21 @@ namespace HW_picker_bot
         static bool to_work = true;
         static int[] rate = new int[5];
         static int counter;
-        static Message messageForCallback = null;
+        static Message? messageForCallback = null;
         static MessagePool<ContextOfMsg> MsgPool = new MessagePool<ContextOfMsg>();
-
+        static private Compare comparator = new Compare();
+        static private TGAPI telegram = new TGAPI();
         static void Main(string[] args)
         {
             Console.WriteLine(")                    )           (   (             )     (     \n( /( (  (         (  ( /(   *   )   )\\ ))\\ )  (    ( /(     )\\ )\n)\\()))\\))(   '  ( )\\ )\\())` )  /(  (()/(()/(  )\\   )\\())(  (()/(  \n((_)\\((_)()\\ )   )((_|(_)\\  ( )(_))  /(_))(_)|((_)|((_)\\ )\\  /(_)) \n_((_)(())\\_)() ((_)_  ((_)(_(_())  (_))(_)) )\\___|_ ((_|(_)(_))\n| || \\ \\((_)/ /  | _ )/ _ \\|_   _|  | _ \\_ _((/ __| |/ /| __| _ \\  \n| __ |\\ \\/\\/ /   | _ \\ (_) | | |    |  _/| | | (__  ' < | _||   \n|_||_| \\_/\\_/    |___/\\___/  |_|    |_| |___| \\___|_|\\_\\|___|_|_\")");
-            Thread StartListening = new Thread(Start_to_listen);
-            StartListening.Start();
-
+            Thread ConfListening = new Thread(async () => await ConfigureListener());
+            ConfListening.Start();
             Console.Read();
         }
 
-        static void Start_to_listen() //поток прослушивания сообщения
+        static async Task ConfigureListener() //поток прослушивания сообщения
         {
-            Console.WriteLine("[INF] New thread started. Starting bot");
-            // string path = @"C:\token.txt";
+            Console.WriteLine($"[INF] {Thread.CurrentThread.ThreadState} New thread started. Starting bot");   
             string path = $"{System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/token.txt";
             try
             {
@@ -61,21 +60,9 @@ namespace HW_picker_bot
                 };
 
                 Program Program = new Program();
-
-                while (Program.to_work)
-                {
-                    if (Program.to_work == true)
-                    {
-                        telegram_bot.StartReceiving(Update, Handle_errors, receiverOptions);
-                        Console.WriteLine("[INF] SUCCESS. Bot got token and started listening");
-                        Console.Read();
-                    }
-                    else
-                    {
-                        Console.WriteLine("Завершение работы");
-                        return;
-                    }
-                }
+                
+                telegram_bot.StartReceiving(OnUpdate, Handle_errors, receiverOptions);
+                Console.WriteLine("[INF] SUCCESS. Bot got token and started listening");
             }
             catch(Exception e)
             {
@@ -90,50 +77,53 @@ namespace HW_picker_bot
             return Task.CompletedTask;
         }
 
-        async static Task Update(ITelegramBotClient telegram_bot, Update update, CancellationToken token) //при получении сообщения
+        async static Task OnUpdate(ITelegramBotClient telegram_bot, Update? update, CancellationToken token)
         {
-
             TGAPI telegram = new TGAPI();
- 
-            try
+            if(update is not null)
             {
-                if (update.Type == UpdateType.CallbackQuery && update.CallbackQuery is not null)
+                try
                 {
-                    var callback = update.CallbackQuery;
-                    ContextOfMsg messageWorker = MsgPool.getObj(update);
-                    Console.WriteLine($"{telegram.getCallbackName(callback.From).Item1} | {telegram.getCallbackName(callback.From).Item2}");
+                    if (update.Type == UpdateType.CallbackQuery && update.CallbackQuery is not null)
+                    {
+                        var callback = update.CallbackQuery;
+                        ContextOfMsg messageWorker = MsgPool.getObj(update);
+                        Console.WriteLine($"{telegram.getCallbackName(callback.From).Item1} | {telegram.getCallbackName(callback.From).Item2}");
 
-                    if (messageWorker.isCallBackFromSameGuy(update))
-                    {
-                        Thread CheckNewMessage = new Thread(() => messageWorker.ParseCallback(telegram_bot, update, token));
-                        CheckNewMessage.Start();
-                        return;
+                        if (messageWorker.isCallBackFromSameGuy(update))
+                        {
+                            Thread CheckNewMessage = new Thread(() => messageWorker.ParseCallback(telegram_bot, update));
+                            CheckNewMessage.Start();
+                            return;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Другой пользователь использует меню оценки");
+                        }
                     }
-                    else
+                    if (update.Type == UpdateType.Message && update.Message is not null)
                     {
-                        Console.WriteLine("Другой пользователь использует меню оценки");
+                            var message = update.Message;
+                            if (message.Text == null) return;
+                            Console.WriteLine($"{telegram.getName(message).Item1} | {telegram.getName(message).Item2}");
+
+                            Thread CheckNewMessage = new Thread(async () => await ParseMessage(telegram_bot, message, update));
+                            CheckNewMessage.Start();
+                            return;
                     }
+                    return;
                 }
-                if (update.Type == UpdateType.Message && update.Message is not null)
+                catch (Exception exception)
                 {
-                        var message = update.Message;
-                        if (message.Text == null) return;
-                        Console.WriteLine($"{telegram.getName(message).Item1} | {telegram.getName(message).Item2}");
-
-                        Thread CheckNewMessage = new Thread(async () => await ParseMessage(telegram_bot, message, update, token));
-                        CheckNewMessage.Start();
-                        return;
+                    Console.WriteLine(exception.Message);
+                    return;
                 }
-                
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine(exception.Message);
             }
         }
-
-        async static Task ParseMessage(ITelegramBotClient telegram_bot, Message message, Update update, CancellationToken token)
+        async static Task ParseMessage(ITelegramBotClient telegram_bot, Message message, Update update)
         {
+            Console.WriteLine("[INFO] Начало парсинга полученного сообщения");
+
             Program Program = new Program();
             Compare comparator = new Compare();
             TGAPI telegram = new TGAPI();
@@ -167,7 +157,7 @@ namespace HW_picker_bot
 
                 if (message.Text.ToLower().Contains("покажи сравнения"))
                 {
-                    comparator.comparasing_photo_read(telegram_bot, message, $"{message.From.FirstName} {message.From.LastName} | {message.From.Username}");
+                    comparator.comparasing_photo_read(telegram_bot, message, $"{message.From.Username}");
                     return;
                 }
 
@@ -211,14 +201,14 @@ namespace HW_picker_bot
 
                 if (message.Text.ToLower().Contains("покажи сравнение"))
                 {
-                    comparator.comparasing_find(telegram_bot, message, $"{message.From.FirstName} {message.From.LastName} | {message.From.Username}");
+                    comparator.comparasing_find(telegram_bot, message, $"{message.From.Username}");
                     return;
                 }
 
             }
         }
 
-        static void ParseCallback(ITelegramBotClient telegram_bot, Update update, CancellationToken token)
+        static void ParseCallback(ITelegramBotClient telegram_bot, Update update)
         {
             Program progr = new Program();
 
@@ -290,7 +280,7 @@ namespace HW_picker_bot
             var msg = update.Message;
             ContextOfMsg.messageForCallback = Message;
         }
-        public void ParseCallback(ITelegramBotClient telegram_bot, Update update, CancellationToken token)
+        public void ParseCallback(ITelegramBotClient telegram_bot, Update update)
         {
             Program progr = new Program();
             //Phone_Menu pm = new Phone_Menu();

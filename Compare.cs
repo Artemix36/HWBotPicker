@@ -31,78 +31,59 @@ namespace HWpicker_bot
     {
         public class Comparasign
         {
-            public string Phone1Name { get; set; }
-            public string Phone1CameraSpec {  get; set; }
-            public string Phone2Name { get; set; }
-            public string Phone2CameraSpec { get; set; }
-            public string CompLink { get; set; }
-            public string AddedBy { get; set; }
-
-/*             public Comparasign(string Phone1Name, string Phone1CameraSpec, string Phone2Name, string Phone2CameraSpec, string CompLink, string AddedBy){
-                Phone1Name = "";
-                Phone1CameraSpec = "";
-                Phone2Name = "";
-                Phone2CameraSpec = "";
-                CompLink = "";
-                AddedBy = "";
-            } */
+            public string? Phone1Name { get; set; }
+            public string? Phone1CameraSpec {  get; set; }
+            public string? Phone2Name { get; set; }
+            public string? Phone2CameraSpec { get; set; }
+            public string? CompLink { get; set; }
+            public string? AddedBy { get; set; }
         }
 
         CheckMessage checker = new CheckMessage();
         DB_HTTP_worker db = new DB_HTTP_worker();
         TGAPI tg = new TGAPI();
+        SpecWriter_HTTP specWriter_HTTP = new SpecWriter_HTTP();
 
-        public async void comparasing_photo_write(ITelegramBotClient telegram_bot, Message? message) //добавление сравнения
+        public void comparasing_photo_write(ITelegramBotClient telegram_bot, Message? message) //добавление сравнения
         {
             Comparasign newComparasign = new Comparasign();
 
-            if(message is not null){
-            string link = checker.GetLink(message.Text);
-            (newComparasign.Phone1Name, newComparasign.Phone2Name) = checker.GetAddComparasignName(message.Text);
-
-            if (newComparasign.Phone1Name != null && newComparasign.Phone2Name != null && message.From.FirstName.Length  <= 10 && message.From.LastName.Length <= 10 && message.From.Username.Length <= 10)
+            if(message is not null && message.Text is not null && message.From is not null && message.From.Username is not null)
             {
-                newComparasign.CompLink = link;
-                newComparasign.AddedBy = $"{message.From.FirstName} {message.From.LastName} | {message.From.Username}";
+                string module = "write_comp";
+                string link = checker.GetLink(message.Text);
+                (newComparasign.Phone1Name, newComparasign.Phone2Name) = checker.GetAddComparasignName(message.Text);
 
-                string answer = db.ComparasignAddAsync(newComparasign).Result;
-
-                if(!answer.ToLower().Contains("error"))
+                if (newComparasign.Phone1Name != null && newComparasign.Phone2Name != null && message.From.Username.Length <= 30)
                 {
-                await telegram_bot.SendTextMessageAsync(message.Chat.Id, answer);
+                    newComparasign.CompLink = link;
+                    newComparasign.AddedBy = $"{message.From.Username}";
+                    
+                    string answer = db.ComparasignAddAsync(newComparasign).Result;
+                    tg.SendUserLog(answer, module, telegram_bot, message);
                 }
                 else
                 {
-                tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Ошибка добавления! Сравнения можно добавлять раз в минуту и имена телефонов должны быть разными и уникальными!</b>", reply: message.MessageId);
+                    Console.WriteLine("[ERROR] Не удалось распарсить ссылку или слишком длинное имя отправителя");
                 }
-            }
-            else
-            {
-                Console.WriteLine("[ERROR] Не удалось распарсить ссылку или слишком длинное имя отправителя");
-                tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[INPUT ERROR]</blockquote><b>Ошибка добавления!\nПравила добавления сравнений:</b>\n-[phone1] vs [phone2] [link]\n-Разрешенные наименования моделей: pixel, iphone, huawei, vivo, xiaomi, oppo, oneplus, samsung, nothing\n-Может быть ваш ник и тэг занимают больше 30 символов?", reply: message.MessageId);
-            }
             }
         }
 
         public void comparasing_photo_read(ITelegramBotClient telegram_bot, Message message, string RequestedBy) //получениие всех сравнений
         {
+            string module = "read_all_comp";
             string answer = db.GetComparasignsAsync(RequestedBy).Result;
             try
             {
                 if (!answer.Contains("ERROR"))
                 {
-                answer = answer.Replace("\\", "");
-                Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
-                tg.sendDataTable(telegram_bot, phoneComparisons, message);
+                    answer = answer.Replace("\\", "");
+                    Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
+                    tg.sendDataTable(telegram_bot, phoneComparisons, message);
                 }
-                if(answer.Contains("ERROR") && RequestedBy != "Ефим Казаков | Artemix36")
+                else
                 {
-                tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены сравнения от этого пользователя!</b>\nЗапрос сравнений от создателя бота", reply: message.MessageId);
-                comparasing_photo_read(telegram_bot, message, "Artemix36");
-                }
-                if(answer.Contains("ERROR") && RequestedBy == "Ефим Казаков | Artemix36")
-                {
-                tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: message.MessageId);
+                    tg.SendUserLog(answer, module, telegram_bot, message);
                 }
             }
             catch (Exception e)
@@ -113,8 +94,8 @@ namespace HWpicker_bot
 
         public async void comparasing_find(ITelegramBotClient telegram_bot, Message message, string RequestedBy) //получение сравнений по имени телефонов
         {
-            (string name1, string name2) = checker.GetFindComparasignName(message.Text);
-            SpecWriter_HTTP specWriter_HTTP = new SpecWriter_HTTP();
+            string module = "read_comp";
+            (string? name1, string? name2) = checker.GetFindComparasignName(message.Text);
 
             if (name1 != null && name2 != null)
             {
@@ -133,15 +114,7 @@ namespace HWpicker_bot
                         }
                         tg.sendDataTable(telegram_bot, phoneComparisons, message);
                     }
-                    if(answer.Contains("ERROR") && RequestedBy != "Ефим Казаков | Artemix36")
-                    {
-                        tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены сравнения от этого пользователя!</b>\nЗапрос сравнений от создателя бота", reply: message.MessageId);
-                        comparasing_find(telegram_bot, message, "Artemix36");
-                    }
-                    if(answer.Contains("ERROR") && RequestedBy == "Ефим Казаков | Artemix36")
-                    {
-                        tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: message.MessageId);
-                    }
+                    else{tg.SendUserLog(answer, module, telegram_bot, message);}
                 }
                 catch (Exception e)
                 {
@@ -167,25 +140,15 @@ namespace HWpicker_bot
                         }
                         tg.sendDataTable(telegram_bot, phoneComparisons, message);
                     }
-                    if(answer.Contains("ERROR") && RequestedBy != "Ефим Казаков | Artemix36")
-                    {
-                        tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены сравнения от этого пользователя!</b>\nЗапрос сравнений от создателя бота", reply: message.MessageId);
-                        comparasing_find(telegram_bot, message, "Artemix36");
-                    }
-                    if(answer.Contains("ERROR") && RequestedBy == "Ефим Казаков | Artemix36")
-                    {
-                        tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: message.MessageId);
-                    }
+                    else{tg.SendUserLog(answer, module, telegram_bot, message);}
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {e.Message}");
                 }
             }
-            if (name1 == null && name2 == null)
-            {
-                tg.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Неверно введено имя сравнения! Проверьте синтаксис!</b>", reply: message.MessageId);
-            }
+
+            else{tg.SendUserLog("[BAD NAMES]", module, telegram_bot, message);}
         }
        
     }

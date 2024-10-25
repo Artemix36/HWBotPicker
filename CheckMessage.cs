@@ -57,7 +57,7 @@ namespace HardWarePickerBot
                             {
                                 answer = answer + $"{words[j]} ";
                             }
-                            Console.WriteLine($"[INFO] Заменена опечатка {words[h]} на правильное название {startWords[i]} получена строка {answer}");
+                            Console.WriteLine($"[INFO] Заменена опечатка {words[h]} -> {startWords[i]}. Отдано: {answer}");
                             return answer.Trim(' ');
                         };
                     }
@@ -70,69 +70,86 @@ namespace HardWarePickerBot
                 return name;
             }
         }
-        public (string?, string?) GetAddComparasignName(string msg)//получение имени сравнения при добавлении
+        public (string?, string?) GetAddComparasignName(string? msg)//получение имени сравнения при добавлении
         {
-            string patternEasy = @"^(добавить ссылку|добавь ссылку|добавить сравнение|добавь сравнение)\s+(.+?)\s+vs\s+(.+?)(?=https?:\/\/(?:photos\.google\.com\/(?:share|album)\/|photos\.app\.goo\.gl\/))";
-            Regex regexEasy = new Regex(patternEasy);
-            Match MatchEasy = regexEasy.Match(msg.ToLower());
-
-            if (MatchEasy.Success)
+            if(msg is not null)
             {
-                string name1 = CompareLevDistance(MatchEasy.Groups[2].Value.Trim(' ')).Trim(' ');
-                string name2 = CompareLevDistance(MatchEasy.Groups[3].Value.Trim(' ')).Trim(' ');
-                
+                string patternEasy = @"^(добавить ссылку|добавь ссылку|добавить сравнение|добавь сравнение)\s+(.+?)\s+vs\s+(.+?)(?=https?:\/\/(?:photos\.google\.com\/(?:share|album)\/|photos\.app\.goo\.gl\/))";
+                Regex regexEasy = new Regex(patternEasy);
+                Match MatchEasy = regexEasy.Match(msg.ToLower());
+
+                if (MatchEasy.Success)
+                {
+                    string name1 = CompareLevDistance(MatchEasy.Groups[2].Value.Trim(' ')).Trim(' ');
+                    string name2 = CompareLevDistance(MatchEasy.Groups[3].Value.Trim(' ')).Trim(' ');
+                    
+                    string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
+                    Regex regex = new Regex(pattern);
+
+                    if (regex.IsMatch(name1.ToLower()) && regex.IsMatch(name2.ToLower()))
+                    {
+                        return (name1, name2);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"REGEX: name1 is {regex.IsMatch(name1.ToLower())} name2 is {regex.IsMatch(name2.ToLower())}");
+                        return (null, null);
+                    }
+                }
+                else
+                {
+                    return ("error", null);
+                }
+            }
+            Console.WriteLine("[ERROR] message was nulls");
+            return (null, null);
+        }
+        public (string?, string?) GetFindComparasignName(string? msg) //получение имени сравнения при поиске
+        {
+            if(msg is not null)
+            {
+                string patternEasy = @"^покажи сравнение\s+([a-zA-Z0-9\s]{1,20})(?:\s+vs\s+([a-zA-Z0-9\s]{1,15}))?$";
                 string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
                 Regex regex = new Regex(pattern);
+                Regex regexEasy = new Regex(patternEasy);
+                Match MatchEasy = regexEasy.Match(msg.ToLower());
 
-                if (regex.IsMatch(name1.ToLower()) && regex.IsMatch(name2.ToLower()))
+                if (MatchEasy.Groups[1].Success && MatchEasy.Groups[2].Success) 
                 {
-                    return (name1, name2);
+                    string name1 = CompareLevDistance(MatchEasy.Groups[1].Value.ToLower());
+                    string name2 = CompareLevDistance(MatchEasy.Groups[2].Value.ToLower());
+
+                    if (regex.IsMatch(name1) && regex.IsMatch(name2))
+                    {
+                        return (name1, name2);
+                    }
+                    else
+                    {
+                        Console.WriteLine("[INFO] Phone names are written badly!");
+                        return (null, null);
+                    }
+                }
+                else if(MatchEasy.Groups[1].Success)
+                {
+                    string name1 = CompareLevDistance(MatchEasy.Groups[1].Value.ToLower());
+
+                    if (regex.IsMatch(name1))
+                    {
+                        return (name1, null);
+                    }
+                    else
+                    {
+                        Console.WriteLine("[INFO] Phone names are written badly!");
+                        return (null, null);
+                    }
                 }
                 else
                 {
-                    Console.WriteLine($"REGEX: name1 is {regex.IsMatch(name1.ToLower())} name2 is {regex.IsMatch(name2.ToLower())}");
                     return (null, null);
                 }
             }
-            else
-            {
-                return ("error", null);
-            }
-
-        }
-        public (string?, string?) GetFindComparasignName(string msg) //получение имени сравнения при поиске
-        {
-            string patternEasy = @"^покажи сравнение\s+([a-zA-Z0-9\s]{1,20})(?:\s+vs\s+([a-zA-Z0-9\s]{1,15}))?$";
-            string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
-            Regex regex = new Regex(pattern);
-            Regex regexEasy = new Regex(patternEasy);
-            Match MatchEasy = regexEasy.Match(msg.ToLower());
-
-            if (MatchEasy.Groups[1].Success && MatchEasy.Groups[2].Success) 
-            {
-                string name1 = CompareLevDistance(MatchEasy.Groups[1].Value.ToLower());
-                string name2 = CompareLevDistance(MatchEasy.Groups[2].Value.ToLower());
-
-                if (regex.IsMatch(name1) && regex.IsMatch(name2))
-                {
-                    return (name1, name2);
-                }
-                else
-                {
-                    Console.WriteLine("[INFO] Phone names are written badly!");
-                    return (null, null);
-                }
-            }
-            else if(regex.IsMatch(CompareLevDistance(MatchEasy.Groups[1].Value.ToLower())))
-            {
-                string name1 = CompareLevDistance(MatchEasy.Groups[1].Value.ToLower());
-                return(name1, null);
-            }
-            else
-            {
-                return (null, null);
-            }
-
+            Console.WriteLine("[ERROR] сообщение пустое");
+            return (null, null);
         } 
         public string? GetReviewName(string msg) //получение имени отзыва
         {
