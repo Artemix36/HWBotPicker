@@ -62,11 +62,14 @@ namespace HW_picker_bot
                 Program Program = new Program();
                 
                 telegram_bot.StartReceiving(OnUpdate, Handle_errors, receiverOptions);
-                Console.WriteLine("[INF] SUCCESS. Bot got token and started listening");
             }
             catch(Exception e)
             {
                 Console.WriteLine(e.ToString());
+            }
+            finally
+            {
+                Console.WriteLine("[INF] SUCCESS. Bot got token and started listening");
             }
             }
 
@@ -130,38 +133,40 @@ namespace HW_picker_bot
             
             if(message.Text is not null && message.From is not null)
             {
-                if (message.Text.ToLower().Contains("миронов"))
+                string receivedText = message.Text.ToLower();
+
+                if (receivedText.Contains("миронов"))
                 {
                     telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "@ReversFlash25 купи 12су за 45к и в доставку!");
                     return;
                 }
 
-                if (message.Text.ToLower().Contains("фролов"))
+                if (receivedText.Contains("фролов"))
                 {
                     telegram.sendMessage(telegram_bot, "document", message.Chat.Id, document: "https://tenor.com/qX1eCt0OjDO.gif");
                     return;
                 }
 
-                if (message.Text.ToLower().Contains("остановить работу сейчас же"))
+                if (receivedText.Contains("остановить работу сейчас же"))
                 {
                     telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "Вырубаюсь");
                     Program.to_work = false;
                     return;
                 }
 
-                if (message.Text.ToLower().Contains("добавить ссылку") || message.Text.ToLower().Contains("добавь ссылку") || message.Text.ToLower().Contains("добавить сравнение") || message.Text.ToLower().Contains("добавь сравнение"))
+                if (receivedText.Contains("добавить ссылку") || receivedText.Contains("добавь ссылку") || receivedText.Contains("добавить сравнение") || receivedText.Contains("добавь сравнение"))
                 {
                     comparator.comparasing_photo_write(telegram_bot, message);
                     return;
                 }
 
-                if (message.Text.ToLower().Contains("покажи сравнения"))
+                if (receivedText.Contains("покажи сравнения"))
                 {
-                    comparator.comparasing_photo_read(telegram_bot, message, $"{message.From.Username}");
+                    comparator.comparasing_photo_read(telegram_bot, message, "Artemix36");
                     return;
                 }
 
-                if (message.Text.ToLower().Contains("добавь отзыв на") || message.Text.ToLower().Contains("добавить отзыв на"))
+                if (receivedText.Contains("добавь отзыв на") || receivedText.Contains("добавить отзыв на"))
                 {
                     try
                     {
@@ -199,9 +204,9 @@ namespace HW_picker_bot
                     }
                 }
 
-                if (message.Text.ToLower().Contains("покажи сравнение"))
+                if (receivedText.Contains("покажи сравнение"))
                 {
-                    comparator.comparasing_find(telegram_bot, message, $"{message.From.Username}");
+                    comparator.comparasing_find(telegram_bot, message, "Artemix36");
                     return;
                 }
 

@@ -148,8 +148,12 @@ namespace HWpicker_bot
                 }
             }
 
-            else{tg.SendUserLog("[BAD NAMES]", module, telegram_bot, message);}
+            if(name1 is null && name2 is null){tg.SendUserLog("[BAD NAMES]", module, telegram_bot, message);}
         }
        
+       public void comparasign_rename()
+       {
+            
+       }
     }
 }
