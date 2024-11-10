@@ -31,12 +31,14 @@ namespace HWpicker_bot
     {
         public class Comparasign
         {
-            public string? Phone1Name { get; set; }
-            public string? Phone1CameraSpec {  get; set; }
-            public string? Phone2Name { get; set; }
-            public string? Phone2CameraSpec { get; set; }
-            public string? CompLink { get; set; }
-            public string? AddedBy { get; set; }
+            public string Phone1Manufacturer { get; set; } = string.Empty;
+            public string Phone1Model { get; set; } = string.Empty;
+            public string Phone1CameraSpec {  get; set; } = string.Empty;
+            public string Phone2Manufacturer { get; set; } = string.Empty;
+            public string Phone2Model { get; set; } = string.Empty;
+            public string Phone2CameraSpec { get; set; } = string.Empty;
+            public string CompareLink { get; set; } = string.Empty;
+            public string AddedBy { get; set; } = string.Empty;
         }
 
         CheckMessage checker = new CheckMessage();
@@ -52,11 +54,11 @@ namespace HWpicker_bot
             {
                 string module = "write_comp";
                 string link = checker.GetLink(message.Text);
-                (newComparasign.Phone1Name, newComparasign.Phone2Name) = checker.GetAddComparasignName(message.Text);
+                (newComparasign.Phone1Manufacturer, newComparasign.Phone1Model, newComparasign.Phone2Manufacturer, newComparasign.Phone2Model) = checker.GetAddComparasignName(message.Text);
 
-                if (newComparasign.Phone1Name != null && newComparasign.Phone2Name != null && message.From.Username.Length <= 30)
+                if (newComparasign.Phone1Manufacturer != null && newComparasign.Phone2Manufacturer != null && message.From.Username.Length <= 30)
                 {
-                    newComparasign.CompLink = link;
+                    newComparasign.CompareLink = link;
                     newComparasign.AddedBy = $"{message.From.Username}";
                     
                     string answer = db.ComparasignAddAsync(newComparasign).Result;
@@ -65,6 +67,7 @@ namespace HWpicker_bot
                 else
                 {
                     Console.WriteLine("[ERROR] Не удалось распарсить ссылку или слишком длинное имя отправителя");
+                    tg.SendUserLog("[INPUT ERROR]", module, telegram_bot, message);
                 }
             }
         }
@@ -105,8 +108,8 @@ namespace HWpicker_bot
                     if (!answer.Contains("ERROR"))
                     {
                         Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Replace("\\", "").Trim('"'));
-                        await specWriter_HTTP.FindAndWriteSpecs(phoneComparisons[0].Phone1Name, phoneComparisons[0].Phone2Name);
-                        (string Spec1, string Spec2) = await specWriter_HTTP.FindAndWriteSpecs(phoneComparisons[0].Phone1Name, phoneComparisons[0].Phone2Name);
+                        await specWriter_HTTP.FindAndWriteSpecs($"{phoneComparisons[0].Phone1Manufacturer} {phoneComparisons[0].Phone1Model}", $"{phoneComparisons[0].Phone2Manufacturer} {phoneComparisons[0].Phone2Model}");
+                        (string Spec1, string Spec2) = await specWriter_HTTP.FindAndWriteSpecs($"{phoneComparisons[0].Phone1Manufacturer} {phoneComparisons[0].Phone1Model}", $"{phoneComparisons[0].Phone2Manufacturer} {phoneComparisons[0].Phone2Model}");
                         if (!Spec1.Contains("ERROR") && !Spec2.Contains("ERROR"))
                         {
                             phoneComparisons[0].Phone1CameraSpec = Spec1;
@@ -123,18 +126,21 @@ namespace HWpicker_bot
             }
             if (name2 == null && name1 != null)
             {
-                string answer = db.GetComparasignByNameAsync(name1, RequestedBy).Result;
+                Comparasign RequestComparasign = new Comparasign();
+                RequestComparasign.AddedBy = RequestedBy;
+                (RequestComparasign.Phone1Manufacturer, RequestComparasign.Phone1Model) = checker.GetManufacturerAndModel(name1);
+                string answer = db.GetComparasignByNameAsync(RequestComparasign).Result;
                 try
                 {
                     if (!answer.Contains("ERROR"))
                     {
                         answer = answer.Replace("\\", "");
-                        Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
-                        if (phoneComparisons.Length <= 1)
+                        List<Comparasign> phoneComparisons = JsonConvert.DeserializeObject<List<Comparasign>>(answer.Trim('"'));
+                        if (phoneComparisons.Count <= 1)
                         {
-                            await specWriter_HTTP.FindAndWriteSpecs(phoneComparisons[0].Phone1Name, phoneComparisons[0].Phone2Name);
-                            string Spec1 = await db.GetCameraSpec(phoneComparisons[0].Phone1Name);
-                            string Spec2 = await db.GetCameraSpec(phoneComparisons[0].Phone2Name);
+                            await specWriter_HTTP.FindAndWriteSpecs($"{phoneComparisons[0].Phone1Manufacturer} {phoneComparisons[0].Phone1Model}", $"{phoneComparisons[0].Phone2Manufacturer} {phoneComparisons[0].Phone2Model}");
+                            string Spec1 = await db.GetCameraSpec($"{phoneComparisons[0].Phone1Manufacturer} {phoneComparisons[0].Phone1Model}");
+                            string Spec2 = await db.GetCameraSpec($"{phoneComparisons[0].Phone2Manufacturer} {phoneComparisons[0].Phone2Model}");
                             phoneComparisons[0].Phone1CameraSpec = Spec1;
                             phoneComparisons[0].Phone2CameraSpec = Spec2;
                         }

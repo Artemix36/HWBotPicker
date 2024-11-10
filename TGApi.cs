@@ -25,12 +25,12 @@ namespace TelegramApi
             List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
             for (int i = 0; i <= phoneComparisons.Length - 1; i++)
             {
-                comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithUrl($"{phoneComparisons[i].Phone1Name} vs {phoneComparisons[i].Phone2Name}", $"{phoneComparisons[i].CompLink}"), });
+                comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithUrl($"{phoneComparisons[i].Phone1Manufacturer} {phoneComparisons[i].Phone1Model} vs {phoneComparisons[i].Phone2Manufacturer} {phoneComparisons[i].Phone2Model}", $"{phoneComparisons[i].CompareLink}"), });
             }
             var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
             if (phoneComparisons.Length <= 1)
             {
-                telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения от пользователя {phoneComparisons[0].AddedBy}:\n<blockquote><b><u>{phoneComparisons[0].Phone1Name}</u></b> - <i>{phoneComparisons[0].Phone1CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2Name}</u></b> - <i>{phoneComparisons[0].Phone2CameraSpec}</i></blockquote>", reply: message.MessageId, buttons: comp_buttons);
+                telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения от пользователя {phoneComparisons[0].AddedBy}:\n<blockquote><b><u>{phoneComparisons[0].Phone1Manufacturer} {phoneComparisons[0].Phone1Model} </u></b> - <i>{phoneComparisons[0].Phone1CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2Manufacturer} {phoneComparisons[0].Phone2Model} </u></b> - <i>{phoneComparisons[0].Phone2CameraSpec}</i></blockquote>", reply: message.MessageId, buttons: comp_buttons);
             }
             else
             {

@@ -12,16 +12,19 @@ using System.Xml.Linq;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 using Mysqlx;
+using System.Net;
+using ZstdSharp.Unsafe;
 
 namespace HardWarePickerBot
 {
     internal class DB_HTTP_worker
     {
         CheckMessage checker = new CheckMessage();
+        public static string? DBBaseURL {get; set;}
         public class CamSpec
         {
-            public string nameOfPhone { get; set; }
-            public string cameraSpec { get; set; }
+            public string? nameOfPhone { get; set; }
+            public string? cameraSpec { get; set; }
         }
         static private HttpClient client = new HttpClient();
         public async Task<string> GetComparasignsAsync(string RequestedBy) //все сравнения
@@ -29,19 +32,30 @@ namespace HardWarePickerBot
             Console.WriteLine($"[INFO] Обращение в БД за всеми сравнениями от {RequestedBy}..");
             try
             {
-                var url = $"http://localhost:5074/Comparasign/Get/{RequestedBy}";
+                var url = $"{DBBaseURL}/Comparasign/Get/{RequestedBy}";
                 var msg = new HttpRequestMessage(HttpMethod.Get, url);
                 var res = await client.SendAsync(msg);
                 var content = await res.Content.ReadAsStringAsync();
 
-                if (content.ToString().Length >= 15)
+                if(res.StatusCode == HttpStatusCode.OK)
                 {
-                    Console.WriteLine($"[INFO] получен ответ от слоя БД: {content}");
-                    return content.ToString();
+                    Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
+                    return content.ToString().Trim('"');
+                }
+                if(res.StatusCode == HttpStatusCode.NotFound)
+                {
+                    Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
+                    return "[ERROR] Не получилось найти сравнения";
+                }
+                if(res.StatusCode == HttpStatusCode.InternalServerError)
+                {
+                    Console.WriteLine($"[ERROR] Внутренняя ошибка на стороне БД {res.StatusCode} Ответ: {content}");
+                    return "[ERROR] Не получилось найти сравнения";
                 }
                 else
                 {
-                    return "[ERROR] Не найдено";
+                    Console.WriteLine($"[ERROR] Непонятная ошибка {res.StatusCode}");
+                    return "[ERROR] Не обработанная ошибка";
                 }
             }
             catch (Exception ex)
@@ -50,26 +64,39 @@ namespace HardWarePickerBot
                 return ("[ERROR] Ошибка при обращении к БД");
             }
         }
-        public async Task<string> GetComparasignByNameAsync(string name, string RequestedBy) //по одному имени
+        public async Task<string> GetComparasignByNameAsync(Comparasign comparasign) //по одному имени
         {
-            Console.WriteLine($"[INFO] Обращение в базу данных для поиска сравнения по имени от {RequestedBy}..");
-            if (name != null || name != "error"){
+            Console.WriteLine($"[INFO] Обращение в базу данных для поиска сравнения по имени {comparasign.Phone1Manufacturer} {comparasign.Phone1Model} от {comparasign.AddedBy}..");
+            if (comparasign.Phone1Manufacturer != null || comparasign.Phone1Manufacturer != "error"){
                 try
                 {
-                    var url = $"http://localhost:5074/Comparasign/Get/{name},{RequestedBy}";
-                    var msg = new HttpRequestMessage(HttpMethod.Get, url);
-                    var res = await client.SendAsync(msg);
+                    var url = $"{DBBaseURL}/Comparasign/Get";
+
+                    string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(comparasign);
+                    var request = new StringContent(jsonString, Encoding.UTF8, "application/json");
+                    var res = await client.PostAsync(url, request);
                     var content = await res.Content.ReadAsStringAsync();
 
-                    if (content.ToString().Length >= 15)
-                    {
-                        Console.WriteLine($"[INFO] получен ответ от слоя БД: {content}");
-                        return content.ToString();
-                    }
-                    else
-                    {
-                        return "[ERROR] Не найдено";
-                    }
+                if(res.StatusCode == HttpStatusCode.OK)
+                {
+                    Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
+                    return content.ToString().Trim('"');
+                }
+                if(res.StatusCode == HttpStatusCode.NotFound)
+                {
+                    Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
+                    return "[ERROR] Не получилось найти сравнения";
+                }
+                if(res.StatusCode == HttpStatusCode.InternalServerError)
+                {
+                    Console.WriteLine($"[ERROR] Внутренняя ошибка на стороне БД {res.StatusCode} Ответ: {content}");
+                    return "[ERROR] Не получилось найти сравнения";
+                }
+                else
+                {
+                    Console.WriteLine($"[ERROR] Непонятная ошибка {res.StatusCode}");
+                    return "[ERROR] Не обработанная ошибка";
+                }
                 }
                 catch (Exception ex)
                 {
@@ -84,24 +111,35 @@ namespace HardWarePickerBot
         } 
         public async Task<string> GetComparasignByTwoNamesAsync(string name1, string name2, string AddedBy) //по двум именам
         {
-            Console.WriteLine($"[INFO] Обращение в базу данных для получения сравнения по двум именам от {AddedBy}..");
+            Console.WriteLine($"[INFO] Обращение в базу данных для получения сравнения по двум именам {name1} {name2} от {AddedBy}..");
             if (name1 != null && name2 != null)
             {
                 try
                 {
-                    var url = $"http://localhost:5074/Comparasigns/Get/{name1},{name2},{AddedBy}";
+                    var url = $"{DBBaseURL}/Comparasigns/Get/{name1},{name2},{AddedBy}";
                     var msg = new HttpRequestMessage(HttpMethod.Get, url);
                     var res = await client.SendAsync(msg);
                     var content = await res.Content.ReadAsStringAsync();
 
-                    if (content.ToString().Length >= 15)
+                    if(res.StatusCode == HttpStatusCode.OK)
                     {
-                        Console.WriteLine($"[INFO] получен ответ от слоя БД: {content}");
-                        return content.ToString();
+                        Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
+                        return content.ToString().Trim('"');
+                    }
+                    if(res.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
+                        return "[ERROR] Не получилось найти сравнения";
+                    }
+                    if(res.StatusCode == HttpStatusCode.InternalServerError)
+                    {
+                        Console.WriteLine($"[ERROR] Внутренняя ошибка на стороне БД {res.StatusCode} Ответ: {content}");
+                        return "[ERROR] Не получилось найти сравнения";
                     }
                     else
                     {
-                        return "[ERROR] Не найдено";
+                        Console.WriteLine($"[ERROR] Непонятная ошибка {res.StatusCode}");
+                        return "[ERROR] Не обработанная ошибка";
                     }
                 }
                 catch (Exception ex)
@@ -120,27 +158,32 @@ namespace HardWarePickerBot
             Console.WriteLine($"[INFO] Обращение в базу данных для записи нового сравнения от {newComparasign.AddedBy}...");
             try
             {
-                var url = $"http://localhost:5074/Comparasign/Add";
-                var jsonObject = new
-                {
-                    Phone1Name = checker.FixPhoneNameToUpper(newComparasign.Phone1Name),
-                    Phone2Name = checker.FixPhoneNameToUpper(newComparasign.Phone2Name),
-                    CompLink = newComparasign.CompLink,
-                    AddedBy = newComparasign.AddedBy,
-                };
-                string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(jsonObject);
+                var url = $"{DBBaseURL}/Comparasign/Add";
+
+                string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(newComparasign);
                 var request = new StringContent(jsonString, Encoding.UTF8, "application/json");
                 var res = await client.PutAsync(url, request);
                 var content = await res.Content.ReadAsStringAsync();
 
-                if (content.ToString().Length >= 15)
+                if(res.StatusCode == HttpStatusCode.OK)
                 {
-                    Console.WriteLine($"[INFO] получен ответ от слоя БД: {content}");
-                    return content.ToString();
+                    Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
+                    return content.ToString().Trim('"');
+                }
+                if(res.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
+                    return content.ToString().Trim('"');
+                }
+                if(res.StatusCode == HttpStatusCode.InternalServerError)
+                {
+                    Console.WriteLine($"[ERROR] Внутренняя ошибка на стороне БД {res.StatusCode} Ответ: {content}");
+                    return content.ToString().Trim('"');
                 }
                 else
                 {
-                    return "[ERROR] Не найдено";
+                    Console.WriteLine($"[ERROR] Непонятная ошибка {res.StatusCode}");
+                    return "[ERROR] Не обработанная ошибка";
                 }
             }
             catch (Exception ex)
@@ -151,17 +194,17 @@ namespace HardWarePickerBot
         }
         public async Task<string> GetCameraSpec(string name) //Получаем есть ли характеристики камеры в БД
         {
-            Console.WriteLine("[INFO] Обращение в БД для поиска Характеристик Камер..");
+            Console.WriteLine($"[INFO] Обращение в БД для поиска Характеристик Камер {name}..");
             if (name != null)
             {
                 try
                 {
-                    var url = $"http://localhost:5074/CameraSpec/Get/{name}";
+                    var url = $"{DBBaseURL}/CameraSpec/Get/{name}";
                     var msg = new HttpRequestMessage(HttpMethod.Get, url);
                     var res = await client.SendAsync(msg);
                     var content = await res.Content.ReadAsStringAsync();
 
-                    if (content.ToString().Length >= 15)
+                    if(res.StatusCode == HttpStatusCode.OK)
                     {
                         //Console.WriteLine($"[INFO] получен ответ от слоя БД: {content}");
                         content = content.Trim('"');
@@ -170,9 +213,20 @@ namespace HardWarePickerBot
                         CamSpec[] camSpec = JsonConvert.DeserializeObject<CamSpec[]>(content);
                         return camSpec[0].cameraSpec.ToString();
                     }
+                    if(res.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
+                        return "[ERROR] Не получилось найти характеристики камеры";
+                    }
+                    if(res.StatusCode == HttpStatusCode.InternalServerError)
+                    {
+                        Console.WriteLine($"[ERROR] Внутренняя ошибка на стороне БД {res.StatusCode} Ответ: {content}");
+                        return "[ERROR] Не получилось найти характеристики камеры";
+                    }
                     else
                     {
-                        return "[ERROR] Не найдено";
+                        Console.WriteLine($"[ERROR] Непонятная ошибка {res.StatusCode}");
+                        return "[ERROR] Не обработанная ошибка";
                     }
                 }
                 catch (Exception ex)
@@ -191,7 +245,7 @@ namespace HardWarePickerBot
             Console.WriteLine($"[INFO] Обращение в БД для добавления характеристик камеры {name}");
             try
             {
-                var url = $"http://localhost:5074/CameraSpec/Add";
+                var url = $"{DBBaseURL}/CameraSpec/Add";
                 var jsonObject = new
                 {
                     NameOfPhone = name,
@@ -202,6 +256,26 @@ namespace HardWarePickerBot
                 var res = await client.PutAsync(url, request);
                 var content = await res.Content.ReadAsStringAsync();
 
+                if(res.StatusCode == HttpStatusCode.OK)
+                {
+                    Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {Regex.Unescape(content)}");
+                    return content.ToString();
+                }
+                if(res.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
+                    return "[ERROR] Не получилось добавить характеристики камеры";
+                }
+                if(res.StatusCode == HttpStatusCode.InternalServerError)
+                {
+                    Console.WriteLine($"[ERROR] Внутренняя ошибка на стороне БД {res.StatusCode} Ответ: {content}");
+                    return "[ERROR] Не получилось добавить характеристики камеры";
+                }
+                else
+                {
+                    Console.WriteLine($"[ERROR] Непонятная ошибка {res.StatusCode}");
+                    return "[ERROR] Не обработанная ошибка";
+                }
                 if (content.ToString().Length >= 15)
                 {
                     Console.WriteLine($"[INFO] DB answer: {Regex.Unescape(content)}");

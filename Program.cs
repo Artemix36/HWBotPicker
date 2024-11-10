@@ -21,11 +21,13 @@ using HardWarePickerBot;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Polling;
 using System.Runtime.CompilerServices;
+using YAMLvarsReader;
 
 namespace HW_picker_bot
 {
     class Program
     {
+
         static bool to_work = true;
         static int[] rate = new int[5];
         static int counter;
@@ -44,32 +46,40 @@ namespace HW_picker_bot
         static async Task ConfigureListener() //поток прослушивания сообщения
         {
             Console.WriteLine($"[INF] {Thread.CurrentThread.ThreadState} New thread started. Starting bot");   
-            string path = $"{System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/token.txt";
+            string path = $"{System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/var.txt";
+            BotVars botVars = new BotVars();
+            YamlReader reader = new YamlReader();
+            botVars = reader.ReadVars();
             try
             {
-                string[] token = System.IO.File.ReadAllLines(path);
-                TelegramBotClient telegram_bot = new TelegramBotClient(token[0]);
-                ReceiverOptions receiverOptions = new ReceiverOptions
+                if(botVars.TGtoken != "not found" && botVars.DBBaseURL is not null)
                 {
-                    AllowedUpdates = new[]
+                    TelegramBotClient telegram_bot = new TelegramBotClient(botVars.TGtoken);
+                    ReceiverOptions receiverOptions = new ReceiverOptions
                     {
-                UpdateType.Message,
-                UpdateType.CallbackQuery
-                },
-                    ThrowPendingUpdates = true,
-                };
-
-                Program Program = new Program();
-                
-                telegram_bot.StartReceiving(OnUpdate, Handle_errors, receiverOptions);
+                        AllowedUpdates = new[]
+                        {
+                    UpdateType.Message,
+                    UpdateType.CallbackQuery
+                    },
+                        ThrowPendingUpdates = true,
+                    };
+                    DB_HTTP_worker.DBBaseURL = botVars.DBBaseURL;
+                    SpecWriter_HTTP.GSMarenaBotToken = botVars.GSMarenaBotToken;
+                    SpecWriter_HTTP.GSMarenaBotUrl = botVars.GSMarenaBotUrl;
+                    Program Program = new Program();
+                    
+                    telegram_bot.StartReceiving(OnUpdate, Handle_errors, receiverOptions);
+                    Console.WriteLine($"[INF] SUCCESS. Bot got token and DB base url {DB_HTTP_worker.DBBaseURL} and started listening");
+                }
+                if(botVars.TGtoken == "not found" || botVars.DBBaseURL is null)
+                {
+                    throw new Exception("[ERROR] Не получен токен бота");
+                }
             }
             catch(Exception e)
             {
                 Console.WriteLine(e.ToString());
-            }
-            finally
-            {
-                Console.WriteLine("[INF] SUCCESS. Bot got token and started listening");
             }
             }
 
@@ -126,10 +136,6 @@ namespace HW_picker_bot
         async static Task ParseMessage(ITelegramBotClient telegram_bot, Message message, Update update)
         {
             Console.WriteLine("[INFO] Начало парсинга полученного сообщения");
-
-            Program Program = new Program();
-            Compare comparator = new Compare();
-            TGAPI telegram = new TGAPI();
             
             if(message.Text is not null && message.From is not null)
             {
@@ -160,7 +166,7 @@ namespace HW_picker_bot
                     return;
                 }
 
-                if (receivedText.Contains("покажи сравнения"))
+                if (receivedText == "покажи сравнения" || receivedText == "покажи мои сравнения")
                 {
                     comparator.comparasing_photo_read(telegram_bot, message, "Artemix36");
                     return;
@@ -204,7 +210,7 @@ namespace HW_picker_bot
                     }
                 }
 
-                if (receivedText.Contains("покажи сравнение"))
+                if (receivedText.Contains("покажи сравнение") || receivedText.Contains("покажи сравнения") || receivedText.Contains("покажи мои сравнения"))
                 {
                     comparator.comparasing_find(telegram_bot, message, "Artemix36");
                     return;

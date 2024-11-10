@@ -15,7 +15,7 @@ namespace HardWarePickerBot
 {
     public class CheckMessage
      {
-        static string[] startWords = { "pixel", "iphone", "huawei", "vivo", "xiaomi", "oppo", "oneplus", "samsung", "nothing", "samsung galaxy", "samsung galaxy note"};
+        static string[] startWords = { "pixel", "iphone", "huawei", "vivo", "xiaomi", "oppo", "oppo find" , "oneplus", "samsung", "nothing", "samsung galaxy", "samsung galaxy note"};
         public string FixPhoneNameToUpper(string name)//Исправление написания регистра имени телефона
         {
             string[] words = name.Split(' ');
@@ -70,7 +70,7 @@ namespace HardWarePickerBot
                 return name;
             }
         }
-        public (string?, string?) GetAddComparasignName(string? msg)//получение имени сравнения при добавлении
+        public (string?, string?, string?, string?) GetAddComparasignName(string? msg)//получение имени сравнения при добавлении
         {
             if(msg is not null)
             {
@@ -83,32 +83,47 @@ namespace HardWarePickerBot
                     string name1 = CompareLevDistance(MatchEasy.Groups[2].Value.Trim(' ')).Trim(' ');
                     string name2 = CompareLevDistance(MatchEasy.Groups[3].Value.Trim(' ')).Trim(' ');
                     
-                    string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
+                    string pattern = $@"^({string.Join("|", startWords)})\s((?:[a-zA-Z]?\d{{1,2}})(?:\s?[a-zA-Z\s]{{0,7}}))?$";
                     Regex regex = new Regex(pattern);
+                    Match Name1Match = regex.Match(name1.ToLower());
+                    Match Name2Match = regex.Match(name2.ToLower());
 
                     if (regex.IsMatch(name1.ToLower()) && regex.IsMatch(name2.ToLower()))
                     {
-                        return (name1, name2);
+                        return (Name1Match.Groups[1].Value.Trim(' '), Name1Match.Groups[2].Value.Trim(' '), Name2Match.Groups[1].Value.Trim(' '), Name2Match.Groups[2].Value.Trim(' '));
                     }
                     else
                     {
                         Console.WriteLine($"REGEX: name1 is {regex.IsMatch(name1.ToLower())} name2 is {regex.IsMatch(name2.ToLower())}");
-                        return (null, null);
+                        return (null, null, null, null);
                     }
                 }
                 else
                 {
-                    return ("error", null);
+                    return ("error", null, null, null);
                 }
             }
             Console.WriteLine("[ERROR] message was nulls");
-            return (null, null);
+            return (null, null, null, null);
+        }
+        public (string?, string?) GetManufacturerAndModel(string name){
+            string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
+            Regex regex = new Regex(pattern);
+            Match Name1Match = regex.Match(name.ToLower());
+            if (regex.IsMatch(name.ToLower()))
+            {
+                return (Name1Match.Groups[1].Value.Trim(' '), Name1Match.Groups[2].Value.Trim(' '));
+            }
+            else
+            {
+                return (string.Empty, string.Empty);
+            }
         }
         public (string?, string?) GetFindComparasignName(string? msg) //получение имени сравнения при поиске
         {
             if(msg is not null)
             {
-                string patternEasy = @"^покажи сравнение\s+([a-zA-Z0-9\s]{1,20})(?:\s+vs\s+([a-zA-Z0-9\s]{1,15}))?$";
+                string patternEasy = @"^покажи\s+(?:мои\s+)?(?:сравнение|сравнения)\s+([a-zA-Z0-9\s]{1,20})(?:\s+vs\s+([a-zA-Z0-9\s]{1,15}))?$";
                 string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
                 Regex regex = new Regex(pattern);
                 Regex regexEasy = new Regex(patternEasy);
