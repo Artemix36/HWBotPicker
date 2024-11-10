@@ -102,12 +102,16 @@ namespace HWpicker_bot
 
             if (name1 != null && name2 != null)
             {
-                string answer = db.GetComparasignByTwoNamesAsync(name1, name2, RequestedBy).Result;
+                Comparasign RequestComparasign = new Comparasign();
+                RequestComparasign.AddedBy = RequestedBy;
+                (RequestComparasign.Phone1Manufacturer, RequestComparasign.Phone1Model) = checker.GetManufacturerAndModel(name1);
+                (RequestComparasign.Phone2Manufacturer, RequestComparasign.Phone2Model) = checker.GetManufacturerAndModel(name2);
+                string answer = db.GetComparasignByTwoNamesAsync(RequestComparasign).Result;
                 try
                 {
                     if (!answer.Contains("ERROR"))
                     {
-                        Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Replace("\\", "").Trim('"'));
+                        Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
                         await specWriter_HTTP.FindAndWriteSpecs($"{phoneComparisons[0].Phone1Manufacturer} {phoneComparisons[0].Phone1Model}", $"{phoneComparisons[0].Phone2Manufacturer} {phoneComparisons[0].Phone2Model}");
                         (string Spec1, string Spec2) = await specWriter_HTTP.FindAndWriteSpecs($"{phoneComparisons[0].Phone1Manufacturer} {phoneComparisons[0].Phone1Model}", $"{phoneComparisons[0].Phone2Manufacturer} {phoneComparisons[0].Phone2Model}");
                         if (!Spec1.Contains("ERROR") && !Spec2.Contains("ERROR"))
@@ -135,8 +139,8 @@ namespace HWpicker_bot
                     if (!answer.Contains("ERROR"))
                     {
                         answer = answer.Replace("\\", "");
-                        List<Comparasign> phoneComparisons = JsonConvert.DeserializeObject<List<Comparasign>>(answer.Trim('"'));
-                        if (phoneComparisons.Count <= 1)
+                        Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
+                        if (phoneComparisons.Length <= 1)
                         {
                             await specWriter_HTTP.FindAndWriteSpecs($"{phoneComparisons[0].Phone1Manufacturer} {phoneComparisons[0].Phone1Model}", $"{phoneComparisons[0].Phone2Manufacturer} {phoneComparisons[0].Phone2Model}");
                             string Spec1 = await db.GetCameraSpec($"{phoneComparisons[0].Phone1Manufacturer} {phoneComparisons[0].Phone1Model}");

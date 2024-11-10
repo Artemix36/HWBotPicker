@@ -109,19 +109,21 @@ namespace HardWarePickerBot
                 return "Не найдено имя";
             }
         } 
-        public async Task<string> GetComparasignByTwoNamesAsync(string name1, string name2, string AddedBy) //по двум именам
+        public async Task<string> GetComparasignByTwoNamesAsync(Comparasign comparasign) //по двум именам
         {
-            Console.WriteLine($"[INFO] Обращение в базу данных для получения сравнения по двум именам {name1} {name2} от {AddedBy}..");
-            if (name1 != null && name2 != null)
+            Console.WriteLine($"[INFO] Обращение в базу данных для поиска сравнения по имени {comparasign.Phone1Manufacturer} {comparasign.Phone1Model} vs {comparasign.Phone2Manufacturer} {comparasign.Phone2Model} от {comparasign.AddedBy}..");
+            if ((comparasign.Phone1Manufacturer != null || comparasign.Phone1Manufacturer != "error") && (comparasign.Phone2Manufacturer != null || comparasign.Phone2Manufacturer != "error"))
             {
                 try
                 {
-                    var url = $"{DBBaseURL}/Comparasigns/Get/{name1},{name2},{AddedBy}";
-                    var msg = new HttpRequestMessage(HttpMethod.Get, url);
-                    var res = await client.SendAsync(msg);
+                    var url = $"{DBBaseURL}/Comparasign/Get";
+
+                    string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(comparasign);
+                    var request = new StringContent(jsonString, Encoding.UTF8, "application/json");
+                    var res = await client.PostAsync(url, request);
                     var content = await res.Content.ReadAsStringAsync();
 
-                    if(res.StatusCode == HttpStatusCode.OK)
+                    if (res.StatusCode == HttpStatusCode.OK)
                     {
                         Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
                         return content.ToString().Trim('"');
@@ -155,7 +157,7 @@ namespace HardWarePickerBot
         }
         public async Task<string> ComparasignAddAsync(Comparasign newComparasign) //добавить сравнение
         {
-            Console.WriteLine($"[INFO] Обращение в базу данных для записи нового сравнения от {newComparasign.AddedBy}...");
+            Console.WriteLine($"[INFO] Обращение в базу данных для записи нового сравнения {newComparasign.Phone1Manufacturer} {newComparasign.Phone1Model} VS {newComparasign.Phone2Manufacturer} {newComparasign.Phone2Model} от {newComparasign.AddedBy}...");
             try
             {
                 var url = $"{DBBaseURL}/Comparasign/Add";
