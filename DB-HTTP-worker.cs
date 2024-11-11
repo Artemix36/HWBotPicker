@@ -66,8 +66,8 @@ namespace HardWarePickerBot
         }
         public async Task<string> GetComparasignByNameAsync(Comparasign comparasign) //по одному имени
         {
-            Console.WriteLine($"[INFO] Обращение в базу данных для поиска сравнения по имени {comparasign.Phone1Manufacturer} {comparasign.Phone1Model} от {comparasign.AddedBy}..");
-            if (comparasign.Phone1Manufacturer != null || comparasign.Phone1Manufacturer != "error"){
+            Console.WriteLine($"[INFO] Обращение в базу данных для поиска сравнения по имени {comparasign.Phone1.Manufacturer} {comparasign.Phone1.Model} от {comparasign.AddedBy}..");
+            if (comparasign.Phone1.Manufacturer != null || comparasign.Phone1.Manufacturer != "error"){
                 try
                 {
                     var url = $"{DBBaseURL}/Comparasign/Get";
@@ -111,8 +111,8 @@ namespace HardWarePickerBot
         } 
         public async Task<string> GetComparasignByTwoNamesAsync(Comparasign comparasign) //по двум именам
         {
-            Console.WriteLine($"[INFO] Обращение в базу данных для поиска сравнения по имени {comparasign.Phone1Manufacturer} {comparasign.Phone1Model} vs {comparasign.Phone2Manufacturer} {comparasign.Phone2Model} от {comparasign.AddedBy}..");
-            if ((comparasign.Phone1Manufacturer != null || comparasign.Phone1Manufacturer != "error") && (comparasign.Phone2Manufacturer != null || comparasign.Phone2Manufacturer != "error"))
+            Console.WriteLine($"[INFO] Обращение в базу данных для поиска сравнения по имени {comparasign.Phone1.Manufacturer} {comparasign.Phone1.Model} vs {comparasign.Phone2.Manufacturer} {comparasign.Phone2.Model} от {comparasign.AddedBy}..");
+            if ((comparasign.Phone1.Manufacturer != null || comparasign.Phone1.Manufacturer != "error") && (comparasign.Phone2.Manufacturer != null || comparasign.Phone2.Manufacturer != "error"))
             {
                 try
                 {
@@ -157,7 +157,7 @@ namespace HardWarePickerBot
         }
         public async Task<string> ComparasignAddAsync(Comparasign newComparasign) //добавить сравнение
         {
-            Console.WriteLine($"[INFO] Обращение в базу данных для записи нового сравнения {newComparasign.Phone1Manufacturer} {newComparasign.Phone1Model} VS {newComparasign.Phone2Manufacturer} {newComparasign.Phone2Model} от {newComparasign.AddedBy}...");
+            Console.WriteLine($"[INFO] Обращение в базу данных для записи нового сравнения {newComparasign.Phone1.Manufacturer} {newComparasign.Phone1.Model} VS {newComparasign.Phone2.Manufacturer} {newComparasign.Phone2.Model} от {newComparasign.AddedBy}...");
             try
             {
                 var url = $"{DBBaseURL}/Comparasign/Add";

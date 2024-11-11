@@ -27,7 +27,6 @@ namespace HW_picker_bot
 {
     class Program
     {
-
         static bool to_work = true;
         static int[] rate = new int[5];
         static int counter;

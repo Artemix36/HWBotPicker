@@ -21,21 +21,29 @@ namespace TelegramApi
     {
         public void sendDataTable(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message)
         {
-            TGAPI telegram = new TGAPI();
             List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
             for (int i = 0; i <= phoneComparisons.Length - 1; i++)
             {
-                comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithUrl($"{phoneComparisons[i].Phone1Manufacturer} {phoneComparisons[i].Phone1Model} vs {phoneComparisons[i].Phone2Manufacturer} {phoneComparisons[i].Phone2Model}", $"{phoneComparisons[i].CompareLink}"), });
+                comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithUrl($"{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}", $"{phoneComparisons[i].CompareLink}"), });
             }
             var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
             if (phoneComparisons.Length <= 1)
             {
-                telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения от пользователя {phoneComparisons[0].AddedBy}:\n<blockquote><b><u>{phoneComparisons[0].Phone1Manufacturer} {phoneComparisons[0].Phone1Model} </u></b> - <i>{phoneComparisons[0].Phone1CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2Manufacturer} {phoneComparisons[0].Phone2Model} </u></b> - <i>{phoneComparisons[0].Phone2CameraSpec}</i></blockquote>", reply: message.MessageId, buttons: comp_buttons);
+                sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения от пользователя {phoneComparisons[0].AddedBy}:\n<blockquote><b><u>{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model} </u></b> - <i>{phoneComparisons[0].Phone1.CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model} </u></b> - <i>{phoneComparisons[0].Phone2.CameraSpec}</i></blockquote>", reply: message.MessageId, buttons: comp_buttons);
             }
             else
             {
-                telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения от пользователя {phoneComparisons[0].AddedBy}:", reply: message.MessageId, buttons: comp_buttons);
+                sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения от пользователя {phoneComparisons[0].AddedBy}:", reply: message.MessageId, buttons: comp_buttons);
             }
+        }
+
+        public void SenAddTable(ITelegramBotClient telegram_bot, Comparasign phoneComparisons, Message message, string answer)
+        {
+            List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
+            comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithUrl($"{phoneComparisons.Phone1.Manufacturer} {phoneComparisons.Phone1.Model} vs {phoneComparisons.Phone2.Manufacturer} {phoneComparisons.Phone2.Model}", $"{phoneComparisons.CompareLink}"), });
+            var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
+
+            sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[SUCCESS]</blockquote><b>{answer.Replace("[SUCCESS] ", "")}</b>", reply: message.MessageId, buttons: comp_buttons);
         }
 
         public async void sendMessage(ITelegramBotClient bot, string type, long peer_id, int? reply = null, string text = null, string photo = null, string document = null, InlineKeyboardMarkup buttons = null)
@@ -88,7 +96,7 @@ namespace TelegramApi
             return (name, id);
         }
 
-        public void SendUserLog(string answer, string module, ITelegramBotClient bot, Message message)
+        public void SendUserLog(string answer, string module, Comparasign? phoneComparison, ITelegramBotClient bot, Message message)
         {
             Compare compare = new Compare();
             if(module == "write_comp")
@@ -99,7 +107,7 @@ namespace TelegramApi
                 }
                 if(answer.Contains("[SUCCESS]"))
                 {
-                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[SUCCESS]</blockquote><b>{answer.Replace("[SUCCESS] ", "")}</b>", reply: message.MessageId);
+                    SenAddTable(bot, phoneComparison, message, answer);
                 }
                 if(answer.Contains("[ERROR]"))
                 {

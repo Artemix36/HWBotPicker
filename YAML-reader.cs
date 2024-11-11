@@ -4,10 +4,10 @@ namespace YAMLvarsReader
 {
     public class BotVars
     {
-        public string TGtoken {get; set;}
-        public string? GSMarenaBotToken {get; set;}
-        public string? DBBaseURL {get; set;}
-        public string? GSMarenaBotUrl {get; set;}
+        public string TGtoken {get; set;}  = "Not Found";
+        public string? GSMarenaBotToken {get; set;}  = "Not Found";
+        public string? DBBaseURL {get; set;} = "Not Found";
+        public string? GSMarenaBotUrl {get; set;}  = "Not Found";
     }
 
     public class YamlReader
@@ -31,10 +31,6 @@ namespace YAMLvarsReader
             catch(Exception ex)
             {
                 Console.WriteLine($"[ERROR] {ex.Message}");
-                vars.TGtoken = "not found";
-                vars.DBBaseURL = "not found";
-                vars.GSMarenaBotToken = "not found";
-                vars.GSMarenaBotUrl = "not found";
                 return vars;
             }
         }
