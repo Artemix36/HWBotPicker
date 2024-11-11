@@ -41,7 +41,11 @@ namespace HWpicker_bot
         DB_HTTP_worker db = new DB_HTTP_worker();
         TGAPI tg = new TGAPI();
         SpecWriter_HTTP specWriter_HTTP = new SpecWriter_HTTP();
-
+        
+        public void ComparasignFindAllInfo(ITelegramBotClient telegram_bot, Message? message)
+        {
+            comparasing_find(telegram_bot, message);
+        }
         public void comparasing_photo_write(ITelegramBotClient telegram_bot, Message? message) //добавление сравнения
         {
             Comparasign newComparasign = new Comparasign();
@@ -68,10 +72,10 @@ namespace HWpicker_bot
             }
         }
 
-        public void comparasing_photo_read(ITelegramBotClient telegram_bot, Message message, string RequestedBy) //получениие всех сравнений
+        public void comparasing_photo_read(ITelegramBotClient telegram_bot, Message message) //получениие всех сравнений
         {
             string module = "read_all_comp";
-            string answer = db.GetComparasignsAsync(RequestedBy).Result;
+            string answer = db.GetComparasignsAsync(message.From.Username).Result;
             try
             {
                 if (!answer.Contains("ERROR"))
@@ -91,7 +95,7 @@ namespace HWpicker_bot
             }
         }
 
-        public async void comparasing_find(ITelegramBotClient telegram_bot, Message message, string RequestedBy) //получение сравнений по имени телефонов
+        public async void comparasing_find(ITelegramBotClient telegram_bot, Message message) //получение сравнений по имени телефонов
         {
             string module = "read_comp";
             (string name1, string name2) = checker.GetFindComparasignName(message.Text);
@@ -99,7 +103,6 @@ namespace HWpicker_bot
             if (name1 != null && name2 != null)
             {
                 Comparasign RequestComparasign = new Comparasign();
-                RequestComparasign.AddedBy = RequestedBy;
                 (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name1);
                 (RequestComparasign.Phone2.Manufacturer, RequestComparasign.Phone2.Model) = checker.GetManufacturerAndModel(name2);
                 string answer = db.GetComparasignByTwoNamesAsync(RequestComparasign).Result;
@@ -108,12 +111,15 @@ namespace HWpicker_bot
                     if (!answer.Contains("ERROR"))
                     {
                         Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
-                        await specWriter_HTTP.FindAndWriteSpecs($"{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model}", $"{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model}");
-                        (string Spec1, string Spec2) = await specWriter_HTTP.FindAndWriteSpecs($"{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model}", $"{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model}");
-                        if (!Spec1.Contains("ERROR") && !Spec2.Contains("ERROR"))
+
+                        if(phoneComparisons.Length == 1)
                         {
-                            phoneComparisons[0].Phone1.CameraSpec = Spec1;
-                            phoneComparisons[0].Phone2.CameraSpec = Spec2;
+                            (string Spec1, string Spec2) = await specWriter_HTTP.FindAndWriteSpecs($"{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model}", $"{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model}");
+                            if (!Spec1.Contains("ERROR") && !Spec2.Contains("ERROR"))
+                            {
+                                phoneComparisons[0].Phone1.CameraSpec = Spec1;
+                                phoneComparisons[0].Phone2.CameraSpec = Spec2;
+                            }
                         }
                         tg.sendDataTable(telegram_bot, phoneComparisons, message);
                     }
@@ -127,7 +133,6 @@ namespace HWpicker_bot
             if (name2 == null && name1 != null)
             {
                 Comparasign RequestComparasign = new Comparasign();
-                RequestComparasign.AddedBy = RequestedBy;
                 (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name1);
                 string answer = db.GetComparasignByNameAsync(RequestComparasign).Result;
                 try

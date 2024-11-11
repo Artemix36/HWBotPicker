@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,19 +22,31 @@ namespace TelegramApi
     {
         public void sendDataTable(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message)
         {
-            List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
-            for (int i = 0; i <= phoneComparisons.Length - 1; i++)
+            try
             {
-                comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithUrl($"{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}", $"{phoneComparisons[i].CompareLink}"), });
+                List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
+
+                for (int i = 0; i <= phoneComparisons.Length - 1; i++)
+                {
+                    List<InlineKeyboardButton> row = new List<InlineKeyboardButton>();
+                    row.Add(InlineKeyboardButton.WithUrl($"{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}", $"{phoneComparisons[i].CompareLink}"));
+                    row.Add(InlineKeyboardButton.WithCallbackData($"Добавлено by: @{phoneComparisons[i].AddedBy}", $"{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}"));
+                    comp_array.Add(row);
+                }
+
+                var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
+                if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.CameraSpec != string.Empty && phoneComparisons[0].Phone2.CameraSpec != string.Empty)
+                {
+                    sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения:\n<blockquote><b><u>{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model} </u></b> - <i>{phoneComparisons[0].Phone1.CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model} </u></b> - <i>{phoneComparisons[0].Phone2.CameraSpec}</i></blockquote>", reply: message.MessageId, buttons: comp_buttons);
+                }
+                else
+                {
+                    sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения:", reply: message.MessageId, buttons: comp_buttons);
+                }
             }
-            var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
-            if (phoneComparisons.Length <= 1)
+            catch(Exception ex)
             {
-                sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения от пользователя {phoneComparisons[0].AddedBy}:\n<blockquote><b><u>{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model} </u></b> - <i>{phoneComparisons[0].Phone1.CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model} </u></b> - <i>{phoneComparisons[0].Phone2.CameraSpec}</i></blockquote>", reply: message.MessageId, buttons: comp_buttons);
-            }
-            else
-            {
-                sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения от пользователя {phoneComparisons[0].AddedBy}:", reply: message.MessageId, buttons: comp_buttons);
+                Console.WriteLine($"[ERROR] ошибка при отправке ответа: {ex.Message} {ex.Data}");
             }
         }
 
@@ -116,25 +129,14 @@ namespace TelegramApi
             }
             if(module == "read_all_comp")
             {
-                if(answer.Contains("ERROR") && message.From.Username != "Artemix36")
-                {
-                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены сравнения от этого пользователя!</b>\nЗапрос сравнений от создателя бота", reply: message.MessageId);
-                    compare.comparasing_photo_read(bot, message, "Artemix36");
-                }
-                if(answer.Contains("ERROR") && message.From.Username == "Artemix36")
+                if(answer.Contains("ERROR"))
                 {
                     sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Сравнения не найдены</b>", reply: message.MessageId);
                 }
             }
             if(module == "read_comp")
             {
-                if(answer.Contains("ERROR") && message.From.Username != "Artemix36")
-                {
-                    Console.WriteLine(answer);
-                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены сравнения от этого пользователя!</b>\nЗапрос сравнений от создателя бота", reply: message.MessageId);
-                    compare.comparasing_find(bot, message, "Artemix36");
-                }
-                if(answer.Contains("ERROR") && message.From.Username == "Artemix36")
+                if(answer.Contains("ERROR"))
                 {
                     Console.WriteLine(answer);
                     sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: message.MessageId);

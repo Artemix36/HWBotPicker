@@ -32,7 +32,7 @@ namespace HardWarePickerBot
             Console.WriteLine($"[INFO] Обращение в БД за всеми сравнениями от {RequestedBy}..");
             try
             {
-                var url = $"{DBBaseURL}/Comparasign/Get/{RequestedBy}";
+                var url = $"{DBBaseURL}/Comparasign/Get/All";
                 var msg = new HttpRequestMessage(HttpMethod.Get, url);
                 var res = await client.SendAsync(msg);
                 var content = await res.Content.ReadAsStringAsync();
