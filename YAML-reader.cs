@@ -1,3 +1,4 @@
+using Google.Protobuf.WellKnownTypes;
 using YamlDotNet.Serialization;
 
 namespace YAMLvarsReader
@@ -8,6 +9,7 @@ namespace YAMLvarsReader
         public string? GSMarenaBotToken {get; set;}  = "Not Found";
         public string? DBBaseURL {get; set;} = "Not Found";
         public string? GSMarenaBotUrl {get; set;}  = "Not Found";
+        public TimeSpan Timeout {get; set;}
     }
 
     public class YamlReader
@@ -26,6 +28,7 @@ namespace YAMLvarsReader
                 vars.DBBaseURL = (string)result["DBBaseURL"];
                 vars.GSMarenaBotToken = (string)result["GSMarenaBotToken"];
                 vars.GSMarenaBotUrl = (string)result["GSMarenaBotUrl"];
+                vars.Timeout = (TimeSpan)result["Timeout"];
                 return vars;
             }
             catch(Exception ex)

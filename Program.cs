@@ -108,6 +108,7 @@ namespace HW_picker_bot
                         message.Text = $"покажи сравнение {update.CallbackQuery.Data}";
                         
                         comparator.ComparasignFindAllInfo(telegram_bot, message);
+                        await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
                     }
                     if (update.Type == UpdateType.Message && update.Message is not null)
                     {
@@ -212,7 +213,7 @@ namespace HW_picker_bot
                 if (receivedText.Contains("покажи сравнение") || receivedText.Contains("покажи сравнения") || receivedText.Contains("покажи мои сравнения"))
                 {
                     Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
-                    comparator.comparasing_find(telegram_bot, message);
+                    comparator.comparasing_find(telegram_bot, message, "message");
                     return;
                 }
 

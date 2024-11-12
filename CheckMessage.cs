@@ -125,7 +125,7 @@ namespace HardWarePickerBot
         {
             if(msg is not null)
             {
-                string patternEasy = @"^покажи\s+(?:мои\s+)?(?:сравнение|сравнения)\s+([a-zA-Z0-9\s]{1,20})(?:\s+vs\s+([a-zA-Z0-9\s]{1,15}))?$";
+                string patternEasy = @"^покажи\s+(?:мои\s+)?(?:сравнение|сравнения)\s+([a-zA-Z0-9\s]{1,20})(?:\s+vs\s+([a-zA-Z0-9\s]{1,20}))?$";
                 string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
                 Regex regex = new Regex(pattern);
                 Regex regexEasy = new Regex(patternEasy);
