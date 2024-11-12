@@ -22,12 +22,13 @@ using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Polling;
 using System.Runtime.CompilerServices;
 using YAMLvarsReader;
+using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 
 namespace HW_picker_bot
 {
     class Program
     {
-
         static bool to_work = true;
         static int[] rate = new int[5];
         static int counter;
@@ -100,25 +101,20 @@ namespace HW_picker_bot
                     if (update.Type == UpdateType.CallbackQuery && update.CallbackQuery is not null)
                     {
                         var callback = update.CallbackQuery;
-                        ContextOfMsg messageWorker = MsgPool.getObj(update);
-                        Console.WriteLine($"{telegram.getCallbackName(callback.From).Item1} | {telegram.getCallbackName(callback.From).Item2}");
-
-                        if (messageWorker.isCallBackFromSameGuy(update))
-                        {
-                            Thread CheckNewMessage = new Thread(() => messageWorker.ParseCallback(telegram_bot, update));
-                            CheckNewMessage.Start();
-                            return;
-                        }
-                        else
-                        {
-                            Console.WriteLine("Другой пользователь использует меню оценки");
-                        }
+                        Message message = new Message();
+                        message.Chat = update.CallbackQuery.Message.Chat;
+                        message.MessageId = update.CallbackQuery.Message.MessageId;
+                        message.From = update.CallbackQuery.From;
+                        message.Text = $"покажи сравнение {update.CallbackQuery.Data}";
+                        
+                        comparator.ComparasignFindAllInfo(telegram_bot, message);
+                        await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
                     }
                     if (update.Type == UpdateType.Message && update.Message is not null)
                     {
                             var message = update.Message;
                             if (message.Text == null) return;
-                            Console.WriteLine($"{telegram.getName(message).Item1} | {telegram.getName(message).Item2}");
+                            Console.WriteLine($"[MSG UPDATE] {telegram.getName(message).Item1} | {telegram.getName(message).Item2}");
 
                             Thread CheckNewMessage = new Thread(async () => await ParseMessage(telegram_bot, message, update));
                             CheckNewMessage.Start();
@@ -135,26 +131,27 @@ namespace HW_picker_bot
         }
         async static Task ParseMessage(ITelegramBotClient telegram_bot, Message message, Update update)
         {
-            Console.WriteLine("[INFO] Начало парсинга полученного сообщения");
-            
             if(message.Text is not null && message.From is not null)
             {
                 string receivedText = message.Text.ToLower();
 
                 if (receivedText.Contains("миронов"))
                 {
+                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
                     telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "@ReversFlash25 купи 12су за 45к и в доставку!");
                     return;
                 }
 
                 if (receivedText.Contains("фролов"))
                 {
+                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
                     telegram.sendMessage(telegram_bot, "document", message.Chat.Id, document: "https://tenor.com/qX1eCt0OjDO.gif");
                     return;
                 }
 
                 if (receivedText.Contains("остановить работу сейчас же"))
                 {
+                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
                     telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "Вырубаюсь");
                     Program.to_work = false;
                     return;
@@ -162,18 +159,21 @@ namespace HW_picker_bot
 
                 if (receivedText.Contains("добавить ссылку") || receivedText.Contains("добавь ссылку") || receivedText.Contains("добавить сравнение") || receivedText.Contains("добавь сравнение"))
                 {
+                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
                     comparator.comparasing_photo_write(telegram_bot, message);
                     return;
                 }
 
                 if (receivedText == "покажи сравнения" || receivedText == "покажи мои сравнения")
                 {
-                    comparator.comparasing_photo_read(telegram_bot, message, "Artemix36");
+                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
+                    comparator.comparasing_photo_read(telegram_bot, message);
                     return;
                 }
 
                 if (receivedText.Contains("добавь отзыв на") || receivedText.Contains("добавить отзыв на"))
                 {
+                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
                     try
                     {
                         messageForCallback = message;
@@ -212,7 +212,8 @@ namespace HW_picker_bot
 
                 if (receivedText.Contains("покажи сравнение") || receivedText.Contains("покажи сравнения") || receivedText.Contains("покажи мои сравнения"))
                 {
-                    comparator.comparasing_find(telegram_bot, message, "Artemix36");
+                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
+                    comparator.comparasing_find(telegram_bot, message, "message");
                     return;
                 }
 

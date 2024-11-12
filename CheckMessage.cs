@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using Mysqlx;
 using System.Xml.Linq;
 using TelegramApi;
+using System.Runtime.CompilerServices;
 
 namespace HardWarePickerBot
 {
@@ -90,7 +91,7 @@ namespace HardWarePickerBot
 
                     if (regex.IsMatch(name1.ToLower()) && regex.IsMatch(name2.ToLower()))
                     {
-                        return (Name1Match.Groups[1].Value.Trim(' '), Name1Match.Groups[2].Value.Trim(' '), Name2Match.Groups[1].Value.Trim(' '), Name2Match.Groups[2].Value.Trim(' '));
+                        return (FixPhoneNameToUpper(Name1Match.Groups[1].Value.Trim(' ')), FixPhoneNameToUpper(Name1Match.Groups[2].Value.Trim(' ')), FixPhoneNameToUpper(Name2Match.Groups[1].Value.Trim(' ')), FixPhoneNameToUpper(Name2Match.Groups[2].Value.Trim(' ')));
                     }
                     else
                     {
@@ -110,6 +111,7 @@ namespace HardWarePickerBot
             string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
             Regex regex = new Regex(pattern);
             Match Name1Match = regex.Match(name.ToLower());
+
             if (regex.IsMatch(name.ToLower()))
             {
                 return (Name1Match.Groups[1].Value.Trim(' '), Name1Match.Groups[2].Value.Trim(' '));
@@ -119,11 +121,11 @@ namespace HardWarePickerBot
                 return (string.Empty, string.Empty);
             }
         }
-        public (string?, string?) GetFindComparasignName(string? msg) //получение имени сравнения при поиске
+        public (string, string) GetFindComparasignName(string? msg) //получение имени сравнения при поиске
         {
             if(msg is not null)
             {
-                string patternEasy = @"^покажи\s+(?:мои\s+)?(?:сравнение|сравнения)\s+([a-zA-Z0-9\s]{1,20})(?:\s+vs\s+([a-zA-Z0-9\s]{1,15}))?$";
+                string patternEasy = @"^покажи\s+(?:мои\s+)?(?:сравнение|сравнения)\s+([a-zA-Z0-9\s]{1,20})(?:\s+vs\s+([a-zA-Z0-9\s]{1,20}))?$";
                 string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
                 Regex regex = new Regex(pattern);
                 Regex regexEasy = new Regex(patternEasy);
@@ -141,7 +143,7 @@ namespace HardWarePickerBot
                     else
                     {
                         Console.WriteLine("[INFO] Phone names are written badly!");
-                        return (null, null);
+                        return (string.Empty, string.Empty);
                     }
                 }
                 else if(MatchEasy.Groups[1].Success)
@@ -150,21 +152,21 @@ namespace HardWarePickerBot
 
                     if (regex.IsMatch(name1))
                     {
-                        return (name1, null);
+                        return (name1, string.Empty);
                     }
                     else
                     {
                         Console.WriteLine("[INFO] Phone names are written badly!");
-                        return (null, null);
+                        return (string.Empty, string.Empty);
                     }
                 }
                 else
                 {
-                    return (null, null);
+                    return (string.Empty, string.Empty);;
                 }
             }
             Console.WriteLine("[ERROR] сообщение пустое");
-            return (null, null);
+            return (string.Empty, string.Empty);;
         } 
         public string? GetReviewName(string msg) //получение имени отзыва
         {
