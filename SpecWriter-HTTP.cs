@@ -16,6 +16,7 @@ namespace HardWarePickerBot
     {
         static public string? GSMarenaBotToken {get; set;}
         static public string? GSMarenaBotUrl {get; set;}
+        static public TimeSpan timeout {get; set;} = new TimeSpan(0, 0, 10);
         static private HttpClient client = new HttpClient();
         DB_HTTP_worker db = new DB_HTTP_worker(); 
         public async Task<(string?, string?)>FindAndWriteSpecs(string name1, string name2) //интеграция с GsmArenaBot
@@ -23,7 +24,7 @@ namespace HardWarePickerBot
             string Spec1 = await db.GetCameraSpec(name1);
             string Spec2 = await db.GetCameraSpec(name2);
             Console.WriteLine($"[INFO] Найденные характеристики камер в БД:\nPhone 1 = {name1} Camera = {Spec1}\nPhone 2 = {name2} Camera = {Spec2}");
-            client.Timeout = new TimeSpan(0, 0, 10);
+            client.Timeout = timeout;
             if (Spec1.Contains("ERROR") || Spec2.Contains("ERROR"))
             {
                 try

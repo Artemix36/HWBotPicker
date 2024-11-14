@@ -15,8 +15,8 @@ using System.Runtime.CompilerServices;
 namespace HardWarePickerBot
 {
     public class CheckMessage
-     {
-        static string[] startWords = { "pixel", "iphone", "huawei", "vivo", "xiaomi", "oppo", "oppo find" , "oneplus", "samsung", "nothing", "samsung galaxy", "samsung galaxy note"};
+    {
+        static public string[] startWords = { "pixel", "iphone", "huawei", "vivo", "xiaomi", "oppo", "oppo find" , "oneplus", "samsung", "nothing", "samsung galaxy", "samsung galaxy note"};
         public string FixPhoneNameToUpper(string name)//Исправление написания регистра имени телефона
         {
             string[] words = name.Split(' ');
