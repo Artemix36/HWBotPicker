@@ -20,7 +20,9 @@ namespace TelegramApi
 {
     internal class TGAPI
     {
-        public void sendDataTable(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message)
+        public static string StartupMessage {get; set;} = string.Empty;
+        public static string ComparasignModuleMessage {get; set;} = string.Empty;
+        public void SendDataTable(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message) //отправить найденные сравнения
         {
             try
             {
@@ -49,8 +51,7 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] ошибка при отправке ответа: {ex.Message} {ex.Data}");
             }
         }
-
-        public void sendDataForCallback(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message)
+        public void SendDataForCallback(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message) //отправить ответ на нажатые кнопки
         {
             try
             {
@@ -82,8 +83,7 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] ошибка при отправке ответа: {ex.Message} {ex.Data}");
             }
         }
-
-        public void SenAddTable(ITelegramBotClient telegram_bot, Comparasign phoneComparisons, Message message, string answer)
+        public void SenAddTable(ITelegramBotClient telegram_bot, Comparasign phoneComparisons, Message message, string answer) //отправить добавленное сравнение
         {
             List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
             comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithUrl($"{phoneComparisons.Phone1.Manufacturer} {phoneComparisons.Phone1.Model} vs {phoneComparisons.Phone2.Manufacturer} {phoneComparisons.Phone2.Model}", $"{phoneComparisons.CompareLink}")});
@@ -92,7 +92,38 @@ namespace TelegramApi
 
             sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[SUCCESS]</blockquote><b>{answer.Replace("[SUCCESS] ", "")}</b>", reply: message.MessageId, buttons: comp_buttons);
         }
+        public void SendMainMenu(ITelegramBotClient telegram_bot, Message message) //отправить основное меню в котором содержатся все модули
+        {
+            try
+            {
+                List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
+                comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"Пользовательские сравнения камер смартфонов", "/comparasign")});
+                var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
 
+                sendMessage(telegram_bot, "text", message.Chat.Id, text: StartupMessage, reply: message.MessageId, buttons: comp_buttons);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Не получилось отправить меню {ex.Message}");
+            }
+        }
+        public void SendComparasignMenu(ITelegramBotClient telegram_bot, Message message) //отправить меню сравнений
+        {
+            try
+            {
+                List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
+                comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"Показать все сравнения", "comp main menu")});
+                var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
+
+                sendMessage(telegram_bot, "text", message.Chat.Id, text: ComparasignModuleMessage, reply: message.MessageId, buttons: comp_buttons);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Не получилось отправить меню {ex.Message}");
+            }
+        }
+       
+       //Делал Адам
         public async void sendMessage(ITelegramBotClient bot, string type, long peer_id, int? reply = null, string text = null, string photo = null, string document = null, InlineKeyboardMarkup buttons = null)
         {
             if (type == "text")
@@ -107,7 +138,6 @@ namespace TelegramApi
                 return;
             }
         }
-
         public (string, long) getName(Message message)
         {
             string name = null;
@@ -125,7 +155,6 @@ namespace TelegramApi
             }
             return (name, id);
         }
-
         public (string, long) getCallbackName(User user)
         {
             string name = null;
@@ -142,7 +171,6 @@ namespace TelegramApi
             }
             return (name, id);
         }
-
         public void SendUserLog(string answer, string module, Comparasign? phoneComparison, ITelegramBotClient bot, Message message)
         {
             Compare compare = new Compare();
@@ -181,7 +209,7 @@ namespace TelegramApi
                 }
             }
         }
-        public int levDistance(String sRow, String sCol) // 0 - same strings, 100 - totally different
+        public int levDistance(String sRow, String sCol) // Нахождение разницы между нужной строкой и инпутом
         {
             int RowLen = sRow.Length;
             int ColLen = sCol.Length;

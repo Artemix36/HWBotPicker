@@ -42,7 +42,7 @@ namespace HWpicker_bot
         TGAPI tg = new TGAPI();
         SpecWriter_HTTP specWriter_HTTP = new SpecWriter_HTTP();
         
-        public void ComparasignFindAllInfo(ITelegramBotClient telegram_bot, Message? message)
+        public void ComparasignFindAllInfo(ITelegramBotClient telegram_bot, Message? message) //получение подробной информации о сравнении по кнопке из меню
         {
             if(message.Text.Contains("vs"))
             {
@@ -52,7 +52,7 @@ namespace HWpicker_bot
             {
                 comparasing_find(telegram_bot, message, "message");
             }
-        }
+        } 
         public void comparasing_photo_write(ITelegramBotClient telegram_bot, Message? message) //добавление сравнения
         {
             Comparasign newComparasign = new Comparasign();
@@ -78,7 +78,6 @@ namespace HWpicker_bot
                 }
             }
         }
-
         public void comparasing_photo_read(ITelegramBotClient telegram_bot, Message message) //получениие всех сравнений
         {
             string module = "read_all_comp";
@@ -89,7 +88,7 @@ namespace HWpicker_bot
                 {
                     answer = answer.Replace("\\", "");
                     Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
-                    tg.sendDataTable(telegram_bot, phoneComparisons, message);
+                    tg.SendDataTable(telegram_bot, phoneComparisons, message);
                 }
                 else
                 {
@@ -101,7 +100,6 @@ namespace HWpicker_bot
                 Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {answer} | {e.Message}");
             }
         }
-
         public async void comparasing_find(ITelegramBotClient telegram_bot, Message message, string type) //получение сравнений по имени телефонов
         {
             string module = "read_comp";
@@ -128,7 +126,7 @@ namespace HWpicker_bot
                                 phoneComparisons[0].Phone2.CameraSpec = Spec2;
                             }
                         }
-                        if(type=="message"){tg.sendDataTable(telegram_bot, phoneComparisons, message);}else{tg.sendDataForCallback(telegram_bot, phoneComparisons, message);}
+                        if(type=="message"){tg.SendDataTable(telegram_bot, phoneComparisons, message);}else{tg.SendDataForCallback(telegram_bot, phoneComparisons, message);}
                     }
                     else{tg.SendUserLog(answer, module, null , telegram_bot, message);}
                 }
@@ -154,7 +152,7 @@ namespace HWpicker_bot
                             phoneComparisons[0].Phone1.CameraSpec = Spec1;
                             phoneComparisons[0].Phone2.CameraSpec = Spec2;
                         }
-                        if(type=="message"){tg.sendDataTable(telegram_bot, phoneComparisons, message);}else{tg.sendDataForCallback(telegram_bot, phoneComparisons, message);}
+                        if(type=="message"){tg.SendDataTable(telegram_bot, phoneComparisons, message);}else{tg.SendDataForCallback(telegram_bot, phoneComparisons, message);}
                     }
                     else{tg.SendUserLog(answer, module, null, telegram_bot, message);}
                 }
@@ -166,10 +164,6 @@ namespace HWpicker_bot
 
             if(name1 == string.Empty && name2 == string.Empty){tg.SendUserLog("[BAD NAMES]", module, null, telegram_bot, message);}
         }
-       
-       public void comparasign_rename()
-       {
-            
-       }
+
     }
 }
