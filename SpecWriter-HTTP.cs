@@ -19,16 +19,11 @@ namespace HardWarePickerBot
         static public TimeSpan timeout {get; set;} = new TimeSpan(0, 0, 10);
         static private HttpClient client = new HttpClient();
         DB_HTTP_worker db = new DB_HTTP_worker(); 
-        public async Task<(string?, string?)>FindAndWriteSpecs(string name1, string name2) //интеграция с GsmArenaBot
+        public async Task<string>FindAndWriteSpecs(string name1) //интеграция с GsmArenaBot
         {
-            string Spec1 = await db.GetCameraSpec(name1);
-            string Spec2 = await db.GetCameraSpec(name2);
-            Console.WriteLine($"[INFO] Найденные характеристики камер в БД:\nPhone 1 = {name1} Camera = {Spec1}\nPhone 2 = {name2} Camera = {Spec2}");
             client.Timeout = timeout;
-            if (Spec1.Contains("ERROR") || Spec2.Contains("ERROR"))
+            try
             {
-                try
-                {
                     var msg1 = new HttpRequestMessage(HttpMethod.Get, GSMarenaBotUrl);
                     msg1.Headers.Add("Authorization", GSMarenaBotToken);
                     msg1.Headers.Add("SPEC-QUERY", name1);
@@ -37,31 +32,14 @@ namespace HardWarePickerBot
                     var content1 = await res.Content.ReadAsStringAsync();
                     Console.WriteLine($"[INFO] Получен ответ от GsmArenaBot: {cleanupSpec(content1.Replace("\n", ""))}");
                     string specs1 = cleanupSpec(content1.Replace("\n", ""));
-                    if(!specs1.Contains("error"))
-                    {
-                        await db.AddSpec(name1, specs1);
-                        var msg2 = new HttpRequestMessage(HttpMethod.Get, GSMarenaBotUrl);
-                        msg2.Headers.Add("Authorization", GSMarenaBotToken);
-                        msg2.Headers.Add("SPEC-QUERY", name2);
-                        msg2.Headers.Add("SPEC-TYPE", "cameras");
-                        var res2 = await client.SendAsync(msg2);
-                        var content2 = await res2.Content.ReadAsStringAsync();
-                        Console.WriteLine($"[INFO] Получен ответ от GsmArenaBot: {cleanupSpec(content2.Replace("\n", ""))}");
-                        string specs2 = cleanupSpec(content2.Replace("\n", ""));
-                        if(!specs2.Contains("error"))
-                        {
-                            await db.AddSpec(name2, specs2);
-                            return (specs1, specs2);
-                        };
-                    };
                     client.Dispose();
+                    return specs1;
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"[ERROR] ошибка при запросе в GsmArenaBot {ex.Message} | {ex.StackTrace}");
+                    return string.Empty;
                 }
-            }
-            return (Spec1, Spec2);
         }
 
         private string cleanupSpec(string content1)

@@ -71,7 +71,7 @@ namespace HardWarePickerBot
                 return name;
             }
         }
-        public (string?, string?, string?, string?) GetAddComparasignName(string? msg)//получение имени сравнения при добавлении
+        public (string, string, string, string) GetAddComparasignName(string? msg)//получение имени сравнения при добавлении
         {
             if(msg is not null)
             {
@@ -96,18 +96,18 @@ namespace HardWarePickerBot
                     else
                     {
                         Console.WriteLine($"REGEX: name1 is {regex.IsMatch(name1.ToLower())} name2 is {regex.IsMatch(name2.ToLower())}");
-                        return (null, null, null, null);
+                        return (string.Empty, string.Empty, string.Empty, string.Empty);
                     }
                 }
                 else
                 {
-                    return ("error", null, null, null);
+                    return ("error", string.Empty, string.Empty, string.Empty);
                 }
             }
             Console.WriteLine("[ERROR] message was nulls");
-            return (null, null, null, null);
+            return (string.Empty, string.Empty, string.Empty, string.Empty);
         }
-        public (string?, string?) GetManufacturerAndModel(string name){
+        public (string, string) GetManufacturerAndModel(string name){
             string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
             Regex regex = new Regex(pattern);
             Match Name1Match = regex.Match(name.ToLower());
@@ -168,11 +168,11 @@ namespace HardWarePickerBot
             Console.WriteLine("[ERROR] сообщение пустое");
             return (string.Empty, string.Empty);;
         } 
-        public string? GetReviewName(string msg) //получение имени отзыва
+        public string GetReviewName(string msg) //получение имени отзыва
         {
             string pattern = $@"^({string.Join("|", startWords)})(\s+\d{{1,2}}\s?[\sa-zA-Z]{{0,10}})?$";
             
-            return null;
+            return string.Empty;
         }
         public string GetLink(string msg) //Получение ссылки на сравнение
         {

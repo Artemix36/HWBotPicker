@@ -29,9 +29,7 @@ namespace HW_picker_bot
 {
     class Program
     {
-        static bool to_work = true;
         static int[] rate = new int[5];
-        static int counter;
         static Message? messageForCallback = null;
         static MessagePool<ContextOfMsg> MsgPool = new MessagePool<ContextOfMsg>();
         static private Compare comparator = new Compare();
@@ -44,7 +42,7 @@ namespace HW_picker_bot
             Console.Read();
         }
 
-        static async Task ConfigureListener() //поток прослушивания сообщения
+        static Task ConfigureListener() //поток прослушивания сообщения
         {
             Console.WriteLine($"[INF] {Thread.CurrentThread.ThreadState} New thread started. Starting bot");   
             string path = $"{System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/var.txt";
@@ -75,26 +73,29 @@ namespace HW_picker_bot
                     
                     telegram_bot.StartReceiving(OnUpdate, Handle_errors, receiverOptions);
                     Console.WriteLine($"[INF] SUCCESS. Bot got token and DB base url {DB_HTTP_worker.DBBaseURL} and started listening");
+                    return Task.CompletedTask;
                 }
                 if(botVars.TGtoken == "not found" || botVars.DBBaseURL is null)
                 {
+                    return Task.CompletedTask;
                     throw new Exception("[ERROR] Не получен токен бота");
                 }
+                return Task.CompletedTask;
             }
             catch(Exception e)
             {
                 Console.WriteLine(e.ToString());
+                return Task.CompletedTask;
             }
-            }
+        }
 
-        private static Task Handle_errors(ITelegramBotClient telegram_bot, Exception exception, CancellationToken token)
+        private static void Handle_errors(ITelegramBotClient telegram_bot, Exception exception, CancellationToken token)
         {
             string ErrorMessage = exception.ToString();
             Console.WriteLine(ErrorMessage);
-            return Task.CompletedTask;
         }
 
-        async static Task OnUpdate(ITelegramBotClient telegram_bot, Update? update, CancellationToken token)
+        static void OnUpdate(ITelegramBotClient telegram_bot, Update? update, CancellationToken token)
         {
             TGAPI telegram = new TGAPI();
             if(update is not null)
@@ -134,14 +135,14 @@ namespace HW_picker_bot
             {
                 string receivedText = message.Text.ToLower();
 
-                if(receivedText == "/start")
+                if(receivedText == "/start" || receivedText == "/start@hw_picker_bot")
                 {
                     Console.WriteLine($"[INFO] Запрошено главное меню через {receivedText}");
                     telegram.SendMainMenu(telegram_bot, message);
                     return;
                 }
 
-                if(receivedText == "/comparasign")
+                if(receivedText == "/comparasign" || receivedText == "/comparasign@hw_picker_bot")
                 {
                     Console.WriteLine($"[INFO] Запрошено меню сравнения через {receivedText}");
                     telegram.SendComparasignMenu(telegram_bot, message);
@@ -166,7 +167,6 @@ namespace HW_picker_bot
                 {
                     Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
                     telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "Вырубаюсь");
-                    Program.to_work = false;
                     return;
                 }
 
@@ -180,7 +180,7 @@ namespace HW_picker_bot
                 if (receivedText == "покажи сравнения" || receivedText == "покажи мои сравнения")
                 {
                     Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
-                    comparator.comparasing_photo_read(telegram_bot, message);
+                    comparator.comparasing_photo_read(telegram_bot, message, 1);
                     return;
                 }
 
@@ -235,38 +235,62 @@ namespace HW_picker_bot
 
        async static Task ParseCallback(ITelegramBotClient telegram_bot, Update update, CallbackQuery callback)
         {
-            if(callback.Data != "comp main menu" && callback.Data != "/comparasign")
+            if(callback is not null && callback.Data is not null && callback.Message is not null)
             {
-                Message message = new Message();
-                message.Chat = update.CallbackQuery.Message.Chat;
-                message.MessageId = update.CallbackQuery.Message.MessageId;
-                message.From = update.CallbackQuery.From;
-                message.Text = $"покажи сравнение {update.CallbackQuery.Data}";
-                
-                comparator.ComparasignFindAllInfo(telegram_bot, message);
-                await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
-            }
-            if(callback.Data == "/comparasign")
-            {
-                Message message = new Message();
-                message.Chat = update.CallbackQuery.Message.Chat;
-                message.MessageId = update.CallbackQuery.Message.MessageId;
-                message.From = update.CallbackQuery.From;
-                message.Text = $"{update.CallbackQuery.Data}";
-                
-                telegram.SendComparasignMenu(telegram_bot, message);
-                await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
-            }
-            if(callback.Data == "comp main menu")
-            {
-                Message message = new Message();
-                message.Chat = update.CallbackQuery.Message.Chat;
-                message.MessageId = update.CallbackQuery.Message.MessageId;
-                message.From = update.CallbackQuery.From;
-                message.Text = $"{update.CallbackQuery.Data}";
-                
-                comparator.comparasing_photo_read(telegram_bot, message);
-                await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
+                if(callback.Data.Contains('['))
+                {
+                    Console.WriteLine($"[INFO] запрос поиска подробной информации по {callback.Data.Trim('[')}");
+                    Message message = new Message();
+                    message.Chat = callback.Message.Chat;
+                    message.MessageId = callback.Message.MessageId;
+                    message.From = callback.From;
+                    message.Text = $"покажи сравнение {callback.Data.Trim('[')}";
+                    
+                    comparator.ComparasignFindAllInfo(telegram_bot, message);
+                    try
+                    {
+                        await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
+                    }
+                    catch(Exception ex)
+                    {
+                        Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
+                    }
+                }
+                if(callback.Data.Contains("page:"))
+                {
+                    Message message = new Message();
+                    message.Chat = callback.Message.Chat;
+                    message.MessageId = callback.Message.MessageId;
+                    message.From = callback.From;
+                    message.AuthorSignature = "CLBK";
+                    message.Text = $"{callback.Data.Replace("page:", "")}";
+                    int page_num;
+                    Int32.TryParse(callback.Data.Replace("page:", ""), out page_num);
+                    comparator.comparasing_photo_read(telegram_bot, message, page_num);
+                    await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
+                }
+                if(callback.Data == "/comparasign")
+                {
+                    Message message = new Message();
+                    message.Chat = callback.Message.Chat;
+                    message.MessageId = callback.Message.MessageId;
+                    message.From = callback.From;
+                    message.Text = $"{callback.Data}";
+                    
+                    telegram.SendComparasignMenu(telegram_bot, message);
+                    await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
+                }
+                if(callback.Data == "comp main menu")
+                {
+                    Message message = new Message();
+                    message.Chat = callback.Message.Chat;
+                    message.MessageId = callback.Message.MessageId;
+                    message.From = callback.From;
+                    message.Text = $"{callback.Data}";
+                    
+                    comparator.comparasing_photo_read(telegram_bot, message, 1);
+                    await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
+                }
             }
         }
 
@@ -276,14 +300,14 @@ namespace HW_picker_bot
     {
         static public int[] rate = new int[5];
         static public int counter { get; set; }
-        static public Message messageForCallback {  get; set; }
-        static public Update update {  get; set; }
+        static public Message messageForCallback {  get; set; } = new Message();
+        static public Update update {  get; set; } = new Update();
 
         static ContextOfMsg Obj = new ContextOfMsg();
 
         public bool isCallBackFromSameGuy(Update update2)
         {
-            if(update is not null && update.Message is not null && update2 is not null && update2.CallbackQuery is not null){
+            if(update is not null && update.Message is not null && update2 is not null && update2.CallbackQuery is not null && update.Message.From is not null){
                 var msg = update.Message.From;
                 var msg2 = update2.CallbackQuery.From;
                 TGAPI tg = new TGAPI();
@@ -334,7 +358,7 @@ namespace HW_picker_bot
                 {
                     counter = 0;
                     //pm.PhoneReview(telegram_bot, rate, messageForCallback, update);
-                    messageForCallback = null;
+                    messageForCallback = new Message();
                 }
                 else
                 {

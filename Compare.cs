@@ -44,15 +44,17 @@ namespace HWpicker_bot
         
         public void ComparasignFindAllInfo(ITelegramBotClient telegram_bot, Message? message) //получение подробной информации о сравнении по кнопке из меню
         {
-            if(message.Text.Contains("vs"))
-            {
-                comparasing_find(telegram_bot, message, "update");
+            if(message is not null && message.Text is not null){
+                if(message.Text.Contains("vs"))
+                {
+                    comparasing_find(telegram_bot, message, "update");
+                }
+                else
+                {
+                    comparasing_find(telegram_bot, message, "message");
+                }
             }
-            else
-            {
-                comparasing_find(telegram_bot, message, "message");
-            }
-        } 
+        }
         public void comparasing_photo_write(ITelegramBotClient telegram_bot, Message? message) //добавление сравнения
         {
             Comparasign newComparasign = new Comparasign();
@@ -78,26 +80,28 @@ namespace HWpicker_bot
                 }
             }
         }
-        public void comparasing_photo_read(ITelegramBotClient telegram_bot, Message message) //получениие всех сравнений
+        public void comparasing_photo_read(ITelegramBotClient telegram_bot, Message message, int page) //получениие всех сравнений по страницам
         {
-            string module = "read_all_comp";
-            string answer = db.GetComparasignsAsync(message.From.Username).Result;
-            try
+            if(message.From is not null && message.From.Username is not null)
             {
-                if (!answer.Contains("ERROR"))
+                string module = "read_all_comp";
+                string answer = db.GetComparasignsAsync(message.From.Username, page).Result.Replace("\\", "");
+                try
                 {
-                    answer = answer.Replace("\\", "");
-                    Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
-                    tg.SendDataTable(telegram_bot, phoneComparisons, message);
+                    if (!answer.Contains("ERROR"))
+                    {
+                        Comparasign[]? phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
+                        if(phoneComparisons is not null){tg.SendDataAllComparasigns(telegram_bot, phoneComparisons, message, page);}
+                    }
+                    else
+                    {
+                        tg.SendUserLog(answer, module, null, telegram_bot, message);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    tg.SendUserLog(answer, module, null, telegram_bot, message);
+                    Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {answer} | {e.Message}");
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {answer} | {e.Message}");
             }
         }
         public async void comparasing_find(ITelegramBotClient telegram_bot, Message message, string type) //получение сравнений по имени телефонов
@@ -115,18 +119,14 @@ namespace HWpicker_bot
                 {
                     if (!answer.Contains("ERROR"))
                     {
-                        Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
+                        Comparasign[]? phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
 
-                        if(phoneComparisons.Length == 1)
+                        if(phoneComparisons is not null && phoneComparisons.Length == 1)
                         {
-                            (string Spec1, string Spec2) = await specWriter_HTTP.FindAndWriteSpecs($"{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model}", $"{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model}");
-                            if (!Spec1.Contains("ERROR") && !Spec2.Contains("ERROR"))
-                            {
-                                phoneComparisons[0].Phone1.CameraSpec = Spec1;
-                                phoneComparisons[0].Phone2.CameraSpec = Spec2;
-                            }
+                            await phoneComparisons[0].Phone1.GetCameraSpec();
+                            await phoneComparisons[0].Phone2.GetCameraSpec();
                         }
-                        if(type=="message"){tg.SendDataTable(telegram_bot, phoneComparisons, message);}else{tg.SendDataForCallback(telegram_bot, phoneComparisons, message);}
+                        if(phoneComparisons is not null && type=="message"){tg.SendDataTable(telegram_bot, phoneComparisons, message);}if(phoneComparisons is not null && type=="update"){tg.SendDataForCallback(telegram_bot, phoneComparisons, message);}
                     }
                     else{tg.SendUserLog(answer, module, null , telegram_bot, message);}
                 }
@@ -135,7 +135,7 @@ namespace HWpicker_bot
                     Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {e.Message} с ответом: {answer}");
                 }
             }
-            if (name2 == string.Empty && name1 != null)
+            if (name2 == string.Empty && name1 != string.Empty)
             {
                 Comparasign RequestComparasign = new Comparasign();
                 (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name1);
@@ -145,14 +145,13 @@ namespace HWpicker_bot
                     if (!answer.Contains("ERROR"))
                     {
                         answer = answer.Replace("\\", "");
-                        Comparasign[] phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
-                        if (phoneComparisons.Length <= 1)
+                        Comparasign[]? phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
+                        if(phoneComparisons is not null && phoneComparisons.Length == 1)
                         {
-                            (string Spec1, string Spec2) =  await specWriter_HTTP.FindAndWriteSpecs($"{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model}", $"{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model}");
-                            phoneComparisons[0].Phone1.CameraSpec = Spec1;
-                            phoneComparisons[0].Phone2.CameraSpec = Spec2;
+                            await phoneComparisons[0].Phone1.GetCameraSpec();
+                            await phoneComparisons[0].Phone2.GetCameraSpec();
                         }
-                        if(type=="message"){tg.SendDataTable(telegram_bot, phoneComparisons, message);}else{tg.SendDataForCallback(telegram_bot, phoneComparisons, message);}
+                        if(phoneComparisons is not null && type=="message"){tg.SendDataTable(telegram_bot, phoneComparisons, message);}if(phoneComparisons is not null && type=="update"){tg.SendDataForCallback(telegram_bot, phoneComparisons, message);}
                     }
                     else{tg.SendUserLog(answer, module, null, telegram_bot, message);}
                 }

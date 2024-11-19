@@ -14,14 +14,66 @@ using Telegram.Bot.Requests;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using ZstdSharp.Unsafe;
 using static HWpicker_bot.Compare;
 
 namespace TelegramApi
 {
     internal class TGAPI
     {
-        public static string StartupMessage {get; set;} = string.Empty;
-        public static string ComparasignModuleMessage {get; set;} = string.Empty;
+        public static string? StartupMessage {get; set;} = string.Empty;
+        public static string? ComparasignModuleMessage {get; set;} = string.Empty;
+        public void SendDataAllComparasigns(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message, int page_now)//отправить все найденные сравнения
+        {
+            try
+            {
+                List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
+
+                for (int i = 0; i <= phoneComparisons.Length - 1; i++)
+                {
+                    List<InlineKeyboardButton> row = new List<InlineKeyboardButton>();
+                        row.Add(InlineKeyboardButton.WithUrl($"{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}", $"{phoneComparisons[i].CompareLink}"));
+                        row.Add(InlineKeyboardButton.WithCallbackData($"Добавлено by: @{phoneComparisons[i].AddedBy}", $"[{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}"));
+                    comp_array.Add(row);
+                }
+
+                if(phoneComparisons.Length == 5)
+                {
+                List<InlineKeyboardButton> row2 = new List<InlineKeyboardButton>();
+                    row2.Add(InlineKeyboardButton.WithCallbackData($"Следующая страница >>", $"page:{page_now + 1}"));
+                comp_array.Add(row2);
+                }
+
+                if(page_now > 1)
+                {
+                List<InlineKeyboardButton> row3 = new List<InlineKeyboardButton>();
+                    row3.Add(InlineKeyboardButton.WithCallbackData($"Предыдущая страница <<", $"page:{page_now - 1}"));
+                 comp_array.Add(row3);
+                }
+
+                
+                var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
+                if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.CameraSpec != string.Empty && phoneComparisons[0].Phone2.CameraSpec != string.Empty)
+                {
+                    sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденное сравнение:\n<blockquote><b><u>{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model} </u></b> - <i>{phoneComparisons[0].Phone1.CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model} </u></b> - <i>{phoneComparisons[0].Phone2.CameraSpec}</i></blockquote>", reply: message.MessageId, buttons: comp_buttons);
+                }
+                else
+                {
+                    if(message.AuthorSignature == "CLBK")
+                    {
+                        telegram_bot.EditMessageReplyMarkupAsync(message.Chat.Id, message.MessageId, replyMarkup: comp_buttons);
+                    }
+                    else
+                    {
+                        sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения:", reply: message.MessageId, buttons: comp_buttons);
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"[ERROR] ошибка при отправке ответа: {ex.Message} {ex.Data}");
+            }
+        }
         public void SendDataTable(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message) //отправить найденные сравнения
         {
             try
@@ -32,10 +84,9 @@ namespace TelegramApi
                 {
                     List<InlineKeyboardButton> row = new List<InlineKeyboardButton>();
                         row.Add(InlineKeyboardButton.WithUrl($"{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}", $"{phoneComparisons[i].CompareLink}"));
-                        row.Add(InlineKeyboardButton.WithCallbackData($"Добавлено by: @{phoneComparisons[i].AddedBy}", $"{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}"));
+                        row.Add(InlineKeyboardButton.WithCallbackData($"Добавлено by: @{phoneComparisons[i].AddedBy}", $"[{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}"));
                     comp_array.Add(row);
                 }
-
                 var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
                 if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.CameraSpec != string.Empty && phoneComparisons[0].Phone2.CameraSpec != string.Empty)
                 {
@@ -63,8 +114,8 @@ namespace TelegramApi
                     row.Add(InlineKeyboardButton.WithUrl($"{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}", $"{phoneComparisons[i].CompareLink}"));
                     comp_array.Add(row);
                     List<InlineKeyboardButton> row2 = new List<InlineKeyboardButton>();
-                    row2.Add(InlineKeyboardButton.WithCallbackData($"Все сравнения {phoneComparisons[i].Phone1.Manufacturer}", $"{phoneComparisons[i].Phone1.Manufacturer}"));
-                    row2.Add(InlineKeyboardButton.WithCallbackData($"Все сравнения {phoneComparisons[i].Phone2.Manufacturer}", $"{phoneComparisons[i].Phone2.Manufacturer}"));
+                    row2.Add(InlineKeyboardButton.WithCallbackData($"Все сравнения {phoneComparisons[i].Phone1.Manufacturer}", $"[{phoneComparisons[i].Phone1.Manufacturer}"));
+                    row2.Add(InlineKeyboardButton.WithCallbackData($"Все сравнения {phoneComparisons[i].Phone2.Manufacturer}", $"[{phoneComparisons[i].Phone2.Manufacturer}"));
                     comp_array.Add(row2);
                 }
 
@@ -124,15 +175,15 @@ namespace TelegramApi
         }
        
        //Делал Адам
-        public async void sendMessage(ITelegramBotClient bot, string type, long peer_id, int? reply = null, string text = null, string photo = null, string document = null, InlineKeyboardMarkup buttons = null)
+        public async void sendMessage(ITelegramBotClient bot, string type, long peer_id, int? reply = null, string? text = null, string? photo = null, string? document = null, InlineKeyboardMarkup? buttons = null)
         {
-            if (type == "text")
+            if (type == "text" && text is not null)
             {
                 await bot.SendTextMessageAsync(chatId: peer_id, text: text, parseMode: ParseMode.Html, replyToMessageId: reply, replyMarkup: buttons);
                 return;
             }
 
-            if (type == "document")
+            if (type == "document" && document is not null)
             {
                 await bot.SendDocumentAsync(chatId: peer_id, caption: text, parseMode: ParseMode.Html, replyToMessageId: reply, document: InputFile.FromUri(document));
                 return;
@@ -140,11 +191,11 @@ namespace TelegramApi
         }
         public (string, long) getName(Message message)
         {
-            string name = null;
+            string name = string.Empty;
             long id = 0;
             var user = message.From;
 
-            if (user.FirstName != null)
+            if (user is not null && user.FirstName != null)
             {
                 name = user.FirstName;
                 id = user.Id;
@@ -157,7 +208,7 @@ namespace TelegramApi
         }
         public (string, long) getCallbackName(User user)
         {
-            string name = null;
+            string name = string.Empty;
             long id = 0;
 
             if (user.FirstName != null)
@@ -180,7 +231,7 @@ namespace TelegramApi
                 {
                     sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[INPUT ERROR]</blockquote><b>\nПравила добавления сравнений:</b>\n-[phone1] vs [phone2] [link]\n-Разрешенные наименования моделей: pixel, iphone, huawei, vivo, xiaomi, oppo, oneplus, samsung, nothing\n-Может быть ваш ник и тэг занимают больше 30 символов?", reply: message.MessageId);
                 }
-                if(answer.Contains("[SUCCESS]"))
+                if(answer.Contains("[SUCCESS]") && phoneComparison is not null)
                 {
                     SenAddTable(bot, phoneComparison, message, answer);
                 }
