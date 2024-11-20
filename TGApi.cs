@@ -23,6 +23,7 @@ namespace TelegramApi
     {
         public static string? StartupMessage {get; set;} = string.Empty;
         public static string? ComparasignModuleMessage {get; set;} = string.Empty;
+        public static ITelegramBotClient telegram_bot {get; set;} = new TelegramBotClient(string.Empty);
         public void SendDataAllComparasigns(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message, int page_now)//отправить все найденные сравнения
         {
             try
@@ -74,7 +75,7 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] ошибка при отправке ответа: {ex.Message} {ex.Data}");
             }
         }
-        public void SendDataTable(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message) //отправить найденные сравнения
+        public void SendDataTable(Comparasign[] phoneComparisons, Message message) //отправить найденные сравнения
         {
             try
             {
@@ -88,6 +89,7 @@ namespace TelegramApi
                     comp_array.Add(row);
                 }
                 var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
+
                 if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.CameraSpec != string.Empty && phoneComparisons[0].Phone2.CameraSpec != string.Empty)
                 {
                     sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденное сравнение:\n<blockquote><b><u>{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model} </u></b> - <i>{phoneComparisons[0].Phone1.CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model} </u></b> - <i>{phoneComparisons[0].Phone2.CameraSpec}</i></blockquote>", reply: message.MessageId, buttons: comp_buttons);
@@ -102,7 +104,7 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] ошибка при отправке ответа: {ex.Message} {ex.Data}");
             }
         }
-        public void SendDataForCallback(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message) //отправить ответ на нажатые кнопки
+        public async void AllInfoAboutComparasingCallback(Comparasign[] phoneComparisons, Message message) //Подробная информация о сравнении по нажатию кнопки
         {
             try
             {
@@ -122,11 +124,45 @@ namespace TelegramApi
                 var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
                 if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.CameraSpec != string.Empty && phoneComparisons[0].Phone2.CameraSpec != string.Empty)
                 {
-                    sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения:\n<blockquote><b><u>{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model} </u></b> - <i>{phoneComparisons[0].Phone1.CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model} </u></b> - <i>{phoneComparisons[0].Phone2.CameraSpec}</i></blockquote>", reply: message.MessageId, buttons: comp_buttons);
+                    await telegram_bot.EditMessageTextAsync(message.Chat.Id, message.MessageId, $"Найденное сравнение:\n<blockquote><b><u>{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model} </u></b> - <i>{phoneComparisons[0].Phone1.CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model} </u></b> - <i>{phoneComparisons[0].Phone2.CameraSpec}</i></blockquote>", parseMode: ParseMode.Html);
+                    await telegram_bot.EditMessageReplyMarkupAsync(message.Chat.Id, message.MessageId, replyMarkup: comp_buttons);
                 }
                 else
                 {
-                    sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения:", reply: message.MessageId, buttons: comp_buttons);
+                    await telegram_bot.EditMessageTextAsync(message.Chat.Id, message.MessageId, text: $"Найденные сравнения:", parseMode: ParseMode.Html);
+                    await telegram_bot.EditMessageReplyMarkupAsync(message.Chat.Id, message.MessageId, replyMarkup: comp_buttons);
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"[ERROR] ошибка при отправке ответа: {ex.Message} {ex.Data}");
+            }
+        }
+
+        public async void AllComparasignsByOnePhoneCallback(Comparasign[] phoneComparisons, Message message)
+        {
+            try
+            {
+                List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
+
+                for (int i = 0; i <= phoneComparisons.Length - 1; i++)
+                {
+                    List<InlineKeyboardButton> row = new List<InlineKeyboardButton>();
+                        row.Add(InlineKeyboardButton.WithUrl($"{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}", $"{phoneComparisons[i].CompareLink}"));
+                        row.Add(InlineKeyboardButton.WithCallbackData($"Добавлено by: @{phoneComparisons[i].AddedBy}", $"[{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}"));
+                    comp_array.Add(row);
+                }
+                var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
+
+                if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.CameraSpec != string.Empty && phoneComparisons[0].Phone2.CameraSpec != string.Empty)
+                {
+                    await telegram_bot.EditMessageTextAsync(message.Chat.Id, message.MessageId, $"Найденное сравнение:\n<blockquote><b><u>{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model} </u></b> - <i>{phoneComparisons[0].Phone1.CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model} </u></b> - <i>{phoneComparisons[0].Phone2.CameraSpec}</i></blockquote>", parseMode: ParseMode.Html);
+                    await telegram_bot.EditMessageReplyMarkupAsync(message.Chat.Id, message.MessageId, replyMarkup: comp_buttons);
+                }
+                else
+                {
+                    await telegram_bot.EditMessageTextAsync(message.Chat.Id, message.MessageId, text: $"Найденные сравнения:", parseMode: ParseMode.Html);
+                    await telegram_bot.EditMessageReplyMarkupAsync(message.Chat.Id, message.MessageId, replyMarkup: comp_buttons);
                 }
             }
             catch(Exception ex)
@@ -173,7 +209,7 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] Не получилось отправить меню {ex.Message}");
             }
         }
-       
+              
        //Делал Адам
         public async void sendMessage(ITelegramBotClient bot, string type, long peer_id, int? reply = null, string? text = null, string? photo = null, string? document = null, InlineKeyboardMarkup? buttons = null)
         {
@@ -222,29 +258,29 @@ namespace TelegramApi
             }
             return (name, id);
         }
-        public void SendUserLog(string answer, string module, Comparasign? phoneComparison, ITelegramBotClient bot, Message message)
+        public void SendUserLog(string answer, string module, Comparasign? phoneComparison, Message message)
         {
             Compare compare = new Compare();
             if(module == "write_comp")
             {
                 if(answer.Contains("[INPUT ERROR]"))
                 {
-                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[INPUT ERROR]</blockquote><b>\nПравила добавления сравнений:</b>\n-[phone1] vs [phone2] [link]\n-Разрешенные наименования моделей: pixel, iphone, huawei, vivo, xiaomi, oppo, oneplus, samsung, nothing\n-Может быть ваш ник и тэг занимают больше 30 символов?", reply: message.MessageId);
+                    sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[INPUT ERROR]</blockquote><b>\nПравила добавления сравнений:</b>\n-[phone1] vs [phone2] [link]\n-Разрешенные наименования моделей: pixel, iphone, huawei, vivo, xiaomi, oppo, oneplus, samsung, nothing\n-Может быть ваш ник и тэг занимают больше 30 символов?", reply: message.MessageId);
                 }
                 if(answer.Contains("[SUCCESS]") && phoneComparison is not null)
                 {
-                    SenAddTable(bot, phoneComparison, message, answer);
+                    SenAddTable(telegram_bot, phoneComparison, message, answer);
                 }
                 if(answer.Contains("[ERROR]"))
                 {
-                    sendMessage(bot, "text",message.Chat.Id, text: $"<blockquote>[USER ERROR]</blockquote><b>{answer.Replace("[ERROR] ", "")}</b>", reply: message.MessageId);
+                    sendMessage(telegram_bot, "text",message.Chat.Id, text: $"<blockquote>[USER ERROR]</blockquote><b>{answer.Replace("[ERROR] ", "")}</b>", reply: message.MessageId);
                 }
             }
             if(module == "read_all_comp")
             {
                 if(answer.Contains("ERROR"))
                 {
-                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Сравнения не найдены</b>", reply: message.MessageId);
+                    sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Сравнения не найдены</b>", reply: message.MessageId);
                 }
             }
             if(module == "read_comp")
@@ -252,11 +288,11 @@ namespace TelegramApi
                 if(answer.Contains("ERROR"))
                 {
                     Console.WriteLine(answer);
-                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: message.MessageId);
+                    sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: message.MessageId);
                 }
                 if(answer.Contains("BAD NAMES"))
                 {
-                    sendMessage(bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Неверно введено имя сравнения или телефонов! Проверьте синтаксис!</b>", reply: message.MessageId);
+                    sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Неверно введено имя сравнения или телефонов! Проверьте синтаксис!</b>", reply: message.MessageId);
                 }
             }
         }

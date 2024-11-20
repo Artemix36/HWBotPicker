@@ -121,6 +121,39 @@ namespace HardWarePickerBot
                 return (string.Empty, string.Empty);
             }
         }
+        public (string, string) ParseRequestName(string text)
+        {
+            string ProcessedText = text.ToLower().Replace("покажи сравнение ","");
+            if(ProcessedText.Contains("vs"))
+            {
+                string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
+                Regex regex = new Regex(pattern);
+                string[] words = ProcessedText.Split(" vs ");
+                if(regex.IsMatch(words[0].Trim(' ')) && regex.IsMatch(words[1].Trim(' ')))
+                {
+                    return (words[0], words[1]);
+                }
+                else
+                {
+                    return (string.Empty, string.Empty);
+                }
+            }
+            if(!ProcessedText.Contains("vs"))
+            {
+                string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
+                Regex regex = new Regex(pattern);
+                string[] words = ProcessedText.Split(" ");
+                if(regex.IsMatch(words[0].Trim(' ')))
+                {
+                    return (words[0], string.Empty);
+                }
+                else
+                {
+                    return (string.Empty, string.Empty);
+                }
+            }
+            return (string.Empty, string.Empty);
+        }
         public (string, string) GetFindComparasignName(string? msg) //получение имени сравнения при поиске
         {
             if(msg is not null)

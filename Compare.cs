@@ -44,14 +44,11 @@ namespace HWpicker_bot
         
         public void ComparasignFindAllInfo(ITelegramBotClient telegram_bot, Message? message) //получение подробной информации о сравнении по кнопке из меню
         {
-            if(message is not null && message.Text is not null){
-                if(message.Text.Contains("vs"))
+            if(message is not null && message.Text is not null)
+            {
+                if(message.AuthorSignature == "CLBK")
                 {
-                    comparasing_find(telegram_bot, message, "update");
-                }
-                else
-                {
-                    comparasing_find(telegram_bot, message, "message");
+                    FindComaparsign(message, "update");
                 }
             }
         }
@@ -71,12 +68,12 @@ namespace HWpicker_bot
                     newComparasign.AddedBy = $"{message.From.Username}";
                     
                     string answer = db.ComparasignAddAsync(newComparasign).Result;
-                    tg.SendUserLog(answer, module, newComparasign, telegram_bot, message);
+                    tg.SendUserLog(answer, module, newComparasign, message);
                 }
                 else
                 {
                     Console.WriteLine("[ERROR] Не удалось распарсить ссылку или слишком длинное имя отправителя");
-                    tg.SendUserLog("[INPUT ERROR]", module, null, telegram_bot, message);
+                    tg.SendUserLog("[INPUT ERROR]", module, null, message);
                 }
             }
         }
@@ -95,7 +92,7 @@ namespace HWpicker_bot
                     }
                     else
                     {
-                        tg.SendUserLog(answer, module, null, telegram_bot, message);
+                        tg.SendUserLog(answer, module, null, message);
                     }
                 }
                 catch (Exception e)
@@ -104,13 +101,60 @@ namespace HWpicker_bot
                 }
             }
         }
-        public async void comparasing_find(ITelegramBotClient telegram_bot, Message message, string type) //получение сравнений по имени телефонов
+        public async void FindComaparsign(Message message, string type)
         {
             string module = "read_comp";
-            (string name1, string name2) = checker.GetFindComparasignName(message.Text);
-
-            if (name1 != string.Empty && name2 != string.Empty)
+            if(message.Text != null)
             {
+                (string name1, string name2) = checker.ParseRequestName(message.Text);
+
+                if(name1 != string.Empty && name2 == string.Empty)
+                {
+                    await RequestComparasign(name1, module, type, message);
+                    return;
+                }
+                if(name1 != string.Empty && name2 != string.Empty)
+                {
+                    await RequestComparasign(name1, name2, module, type, message);
+                    return;
+                }
+                return;
+            }
+        }
+        public async Task RequestComparasign(string name, string module, string type, Message message)
+        {
+                Comparasign RequestComparasign = new Comparasign();
+                (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name);
+                string answer = db.GetComparasignByNameAsync(RequestComparasign).Result;
+                try
+                {
+                    if (!answer.Contains("ERROR"))
+                    {
+                        answer = answer.Replace("\\", "");
+                        Comparasign[]? phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
+                        if(phoneComparisons is not null && phoneComparisons.Length == 1)
+                        {
+                            await phoneComparisons[0].Phone1.GetCameraSpec();
+                            await phoneComparisons[0].Phone2.GetCameraSpec();
+                        }
+                        if(phoneComparisons is not null && type=="message")
+                        {
+                            tg.SendDataTable(phoneComparisons, message);
+                        }
+                        if(phoneComparisons is not null && type=="update")
+                        {
+                            tg.AllComparasignsByOnePhoneCallback(phoneComparisons, message);
+                        }
+                    }
+                    else{tg.SendUserLog(answer, module, null, message);}
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {e.Message}");
+                }
+        }
+        public async Task RequestComparasign(string name1, string name2, string module, string type, Message message)
+        {
                 Comparasign RequestComparasign = new Comparasign();
                 (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name1);
                 (RequestComparasign.Phone2.Manufacturer, RequestComparasign.Phone2.Model) = checker.GetManufacturerAndModel(name2);
@@ -126,43 +170,21 @@ namespace HWpicker_bot
                             await phoneComparisons[0].Phone1.GetCameraSpec();
                             await phoneComparisons[0].Phone2.GetCameraSpec();
                         }
-                        if(phoneComparisons is not null && type=="message"){tg.SendDataTable(telegram_bot, phoneComparisons, message);}if(phoneComparisons is not null && type=="update"){tg.SendDataForCallback(telegram_bot, phoneComparisons, message);}
+                        if(phoneComparisons is not null && type=="message")
+                        {
+                            tg.SendDataTable( phoneComparisons, message);
+                        }
+                        if(phoneComparisons is not null && type=="update")
+                        {
+                            tg.AllInfoAboutComparasingCallback( phoneComparisons, message);
+                        }
                     }
-                    else{tg.SendUserLog(answer, module, null , telegram_bot, message);}
+                    else{tg.SendUserLog(answer, module, null , message);}
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {e.Message} с ответом: {answer}");
                 }
-            }
-            if (name2 == string.Empty && name1 != string.Empty)
-            {
-                Comparasign RequestComparasign = new Comparasign();
-                (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name1);
-                string answer = db.GetComparasignByNameAsync(RequestComparasign).Result;
-                try
-                {
-                    if (!answer.Contains("ERROR"))
-                    {
-                        answer = answer.Replace("\\", "");
-                        Comparasign[]? phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
-                        if(phoneComparisons is not null && phoneComparisons.Length == 1)
-                        {
-                            await phoneComparisons[0].Phone1.GetCameraSpec();
-                            await phoneComparisons[0].Phone2.GetCameraSpec();
-                        }
-                        if(phoneComparisons is not null && type=="message"){tg.SendDataTable(telegram_bot, phoneComparisons, message);}if(phoneComparisons is not null && type=="update"){tg.SendDataForCallback(telegram_bot, phoneComparisons, message);}
-                    }
-                    else{tg.SendUserLog(answer, module, null, telegram_bot, message);}
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {e.Message}");
-                }
-            }
-
-            if(name1 == string.Empty && name2 == string.Empty){tg.SendUserLog("[BAD NAMES]", module, null, telegram_bot, message);}
         }
-
     }
 }

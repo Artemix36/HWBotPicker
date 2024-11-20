@@ -44,7 +44,7 @@ namespace HW_picker_bot
 
         static Task ConfigureListener() //поток прослушивания сообщения
         {
-            Console.WriteLine($"[INF] {Thread.CurrentThread.ThreadState} New thread started. Starting bot");   
+            Console.WriteLine($"[INF] {Thread.CurrentThread.ThreadState}: New thread started. Starting bot");   
             string path = $"{System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/var.txt";
             BotVars botVars = new BotVars();
             YamlReader reader = new YamlReader();
@@ -69,6 +69,7 @@ namespace HW_picker_bot
                     SpecWriter_HTTP.timeout = botVars.Timeout;
                     TGAPI.StartupMessage = botVars.StarttupMessage;
                     TGAPI.ComparasignModuleMessage = botVars.ComparasignModuleMessage;
+                    TGAPI.telegram_bot = telegram_bot;
                     Program Program = new Program();
                     
                     telegram_bot.StartReceiving(OnUpdate, Handle_errors, receiverOptions);
@@ -226,7 +227,7 @@ namespace HW_picker_bot
                 if (receivedText.Contains("покажи сравнение") || receivedText.Contains("покажи сравнения") || receivedText.Contains("покажи мои сравнения"))
                 {
                     Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
-                    comparator.comparasing_find(telegram_bot, message, "message");
+                    comparator.FindComaparsign(message, "message");
                     return;
                 }
 
@@ -244,6 +245,7 @@ namespace HW_picker_bot
                     message.Chat = callback.Message.Chat;
                     message.MessageId = callback.Message.MessageId;
                     message.From = callback.From;
+                    message.AuthorSignature = "CLBK";
                     message.Text = $"покажи сравнение {callback.Data.Trim('[')}";
                     
                     comparator.ComparasignFindAllInfo(telegram_bot, message);
