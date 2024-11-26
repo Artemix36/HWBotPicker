@@ -58,10 +58,10 @@ namespace HW_picker_bot
                     {
                         AllowedUpdates = new[]
                         {
-                    UpdateType.Message,
-                    UpdateType.CallbackQuery
-                    },
-                        ThrowPendingUpdates = true,
+                        UpdateType.Message,
+                        UpdateType.CallbackQuery
+                        },
+                        DropPendingUpdates = true,
                     };
                     DB_HTTP_worker.DBBaseURL = botVars.DBBaseURL;
                     SpecWriter_HTTP.GSMarenaBotToken = botVars.GSMarenaBotToken;
@@ -146,7 +146,7 @@ namespace HW_picker_bot
                 if(receivedText == "/comparasign" || receivedText == "/comparasign@hw_picker_bot")
                 {
                     Console.WriteLine($"[INFO] Запрошено меню сравнения через {receivedText}");
-                    telegram.SendComparasignMenu(telegram_bot, message);
+                    telegram.SendComparasignMenu(telegram_bot, message, message.MessageId);
                     return;
                 }
 
@@ -181,7 +181,7 @@ namespace HW_picker_bot
                 if (receivedText == "покажи сравнения" || receivedText == "покажи мои сравнения")
                 {
                     Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
-                    comparator.comparasing_photo_read(telegram_bot, message, 1);
+                    comparator.comparasing_photo_read(telegram_bot, message, 1, message.MessageId);
                     return;
                 }
 
@@ -211,7 +211,7 @@ namespace HW_picker_bot
                                     InlineKeyboardButton.WithCallbackData(text: "5", callbackData: $"{buttons[i]}: 5"),
                                     },
                                 });
-                                await telegram_bot.SendTextMessageAsync(message.Chat.Id, $"{buttons[i]}:", replyMarkup: ikmReviews);
+                                await telegram_bot.SendMessage(message.Chat.Id, $"{buttons[i]}:", replyMarkup: ikmReviews);
                             }
                             ContextOfMsg messageWorker = MsgPool.getObj(update);
                             messageWorker.SetValues(0, update, message);
@@ -227,7 +227,7 @@ namespace HW_picker_bot
                 if (receivedText.Contains("покажи сравнение") || receivedText.Contains("покажи сравнения") || receivedText.Contains("покажи мои сравнения"))
                 {
                     Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
-                    comparator.FindComaparsign(message, "message");
+                    comparator.FindComaparsign(message, "message", message.MessageId);
                     return;
                 }
 
@@ -243,15 +243,14 @@ namespace HW_picker_bot
                     Console.WriteLine($"[INFO] запрос поиска подробной информации по {callback.Data.Trim('[')}");
                     Message message = new Message();
                     message.Chat = callback.Message.Chat;
-                    message.MessageId = callback.Message.MessageId;
                     message.From = callback.From;
                     message.AuthorSignature = "CLBK";
                     message.Text = $"покажи сравнение {callback.Data.Trim('[')}";
                     
-                    comparator.ComparasignFindAllInfo(telegram_bot, message);
+                    comparator.ComparasignFindAllInfo(telegram_bot, message, callback.Message.MessageId);
                     try
                     {
-                        await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
+                        await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
                     }
                     catch(Exception ex)
                     {
@@ -262,36 +261,33 @@ namespace HW_picker_bot
                 {
                     Message message = new Message();
                     message.Chat = callback.Message.Chat;
-                    message.MessageId = callback.Message.MessageId;
                     message.From = callback.From;
                     message.AuthorSignature = "CLBK";
                     message.Text = $"{callback.Data.Replace("page:", "")}";
                     int page_num;
                     Int32.TryParse(callback.Data.Replace("page:", ""), out page_num);
-                    comparator.comparasing_photo_read(telegram_bot, message, page_num);
-                    await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
+                    comparator.comparasing_photo_read(telegram_bot, message, page_num, callback.Message.MessageId);
+                    await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
                 }
                 if(callback.Data == "/comparasign")
                 {
                     Message message = new Message();
                     message.Chat = callback.Message.Chat;
-                    message.MessageId = callback.Message.MessageId;
                     message.From = callback.From;
                     message.Text = $"{callback.Data}";
                     
-                    telegram.SendComparasignMenu(telegram_bot, message);
-                    await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
+                    telegram.SendComparasignMenu(telegram_bot, message, callback.Message.MessageId);
+                    await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
                 }
                 if(callback.Data == "comp main menu")
                 {
                     Message message = new Message();
                     message.Chat = callback.Message.Chat;
-                    message.MessageId = callback.Message.MessageId;
                     message.From = callback.From;
                     message.Text = $"{callback.Data}";
                     
-                    comparator.comparasing_photo_read(telegram_bot, message, 1);
-                    await telegram_bot.AnswerCallbackQueryAsync(callbackQueryId: callback.Id);
+                    comparator.comparasing_photo_read(telegram_bot, message, 1, callback.Message.MessageId);
+                    await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
                 }
             }
         }
@@ -364,7 +360,7 @@ namespace HW_picker_bot
                 }
                 else
                 {
-                    telegram_bot.SendTextMessageAsync(update.Id, "Потерян контекст или кто то нажал кнопки за вас");
+                    telegram_bot.SendMessage(update.Id, "Потерян контекст или кто то нажал кнопки за вас");
                 }
             }
         }

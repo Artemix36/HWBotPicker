@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using Mysqlx;
 using System.Net;
 using ZstdSharp.Unsafe;
+using HWPickerClassesLibrary;
 
 namespace HardWarePickerBot
 {
@@ -21,11 +22,6 @@ namespace HardWarePickerBot
     {
         CheckMessage checker = new CheckMessage();
         public static string? DBBaseURL {get; set;}
-        public class CamSpec
-        {
-            public string? nameOfPhone { get; set; }
-            public string cameraSpec { get; set; } = string.Empty;
-        }
         public async Task<string> GetComparasignsAsync(string RequestedBy, int page) //все сравнения
         {
             Console.WriteLine($"[INFO] Обращение в БД за всеми сравнениями от {RequestedBy}..");
@@ -229,7 +225,7 @@ namespace HardWarePickerBot
                         content = content.Trim('"');
                         content = Regex.Unescape(content);
                         CamSpec[]? camSpec = JsonConvert.DeserializeObject<CamSpec[]>(content);
-                        if(camSpec is not null && camSpec[0].cameraSpec is not null){return camSpec[0].cameraSpec.ToString();}else{return string.Empty;}
+                        if(camSpec is not null && camSpec[0].CameraSpec is not null){return camSpec[0].CameraSpec.ToString();}else{return string.Empty;}
                     }
                     if(res.StatusCode == HttpStatusCode.NotFound)
                     {

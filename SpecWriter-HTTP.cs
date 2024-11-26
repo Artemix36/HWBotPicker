@@ -1,4 +1,5 @@
 ﻿using Google.Protobuf.WellKnownTypes;
+using HWPickerClassesLibrary;
 using MySqlX.XDevAPI;
 using System;
 using System.Collections.Generic;
@@ -41,7 +42,27 @@ namespace HardWarePickerBot
                     return string.Empty;
                 }
         }
-
+        public async Task GetCameraSpec(Phone phone)//Получение харак-к камер для телефона
+        {
+            if(phone.IsPhoneWritten())
+            {
+                DB_HTTP_worker db = new DB_HTTP_worker();
+                string ResultFromDB = await db.GetCameraSpec($"{phone.Manufacturer} {phone.Model}");
+                if(ResultFromDB is not null)
+                {
+                    Console.WriteLine($"[INFO] Найдены хар-ки камер для {phone.Manufacturer} {phone.Model} в базе данных {ResultFromDB}. Результат записан в объект.");
+                    phone.Specs.CameraSpec = ResultFromDB;
+                    return;
+                }
+                else
+                {
+                    SpecWriter_HTTP specWriter = new SpecWriter_HTTP();
+                    string ResultFromGSM = await specWriter.FindAndWriteSpecs($"{phone.Manufacturer} {phone.Model}");
+                    phone.Specs.CameraSpec = ResultFromGSM;
+                    return;
+                }
+            }
+        }
         private string cleanupSpec(string content1)
         {
             try

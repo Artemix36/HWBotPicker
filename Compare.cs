@@ -24,31 +24,25 @@ using static System.Net.Mime.MediaTypeNames;
 using MySql.Data.MySqlClient;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
+using HWPickerClassesLibrary;
+using Org.BouncyCastle.Asn1.Misc;
+using ZstdSharp.Unsafe;
 
 namespace HWpicker_bot
 {
     internal class Compare
     {
-        public class Comparasign
-        {
-            public Phone Phone1 {get; set;} = new Phone();
-            public Phone Phone2 {get; set;} = new Phone();
-            public string CompareLink { get; set; } = string.Empty;
-            public string AddedBy { get; set; } = string.Empty;
-        }
-
         CheckMessage checker = new CheckMessage();
         DB_HTTP_worker db = new DB_HTTP_worker();
         TGAPI tg = new TGAPI();
         SpecWriter_HTTP specWriter_HTTP = new SpecWriter_HTTP();
-        
-        public void ComparasignFindAllInfo(ITelegramBotClient telegram_bot, Message? message) //получение подробной информации о сравнении по кнопке из меню
+        public void ComparasignFindAllInfo(ITelegramBotClient telegram_bot, Message? message, int replyID) //получение подробной информации о сравнении по кнопке из меню
         {
             if(message is not null && message.Text is not null)
             {
                 if(message.AuthorSignature == "CLBK")
                 {
-                    FindComaparsign(message, "update");
+                    FindComaparsign(message, "update", replyID);
                 }
             }
         }
@@ -73,11 +67,11 @@ namespace HWpicker_bot
                 else
                 {
                     Console.WriteLine("[ERROR] Не удалось распарсить ссылку или слишком длинное имя отправителя");
-                    tg.SendUserLog("[INPUT ERROR]", module, null, message);
+                    tg.SendUserLog("[INPUT ERROR]", module, new Comparasign(), message);
                 }
             }
         }
-        public void comparasing_photo_read(ITelegramBotClient telegram_bot, Message message, int page) //получениие всех сравнений по страницам
+        public void comparasing_photo_read(ITelegramBotClient telegram_bot, Message message, int page, int replyTo) //получениие всех сравнений по страницам
         {
             if(message.From is not null && message.From.Username is not null)
             {
@@ -88,11 +82,11 @@ namespace HWpicker_bot
                     if (!answer.Contains("ERROR"))
                     {
                         Comparasign[]? phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
-                        if(phoneComparisons is not null){tg.SendDataAllComparasigns(telegram_bot, phoneComparisons, message, page);}
+                        if(phoneComparisons is not null){tg.SendDataAllComparasigns(telegram_bot, phoneComparisons, message, page, replyTo);}
                     }
                     else
                     {
-                        tg.SendUserLog(answer, module, null, message);
+                        tg.SendUserLog(answer, module, new Comparasign(), message);
                     }
                 }
                 catch (Exception e)
@@ -101,7 +95,7 @@ namespace HWpicker_bot
                 }
             }
         }
-        public async void FindComaparsign(Message message, string type)
+        public async void FindComaparsign(Message message, string type, int replyID)
         {
             string module = "read_comp";
             if(message.Text != null)
@@ -110,18 +104,18 @@ namespace HWpicker_bot
 
                 if(name1 != string.Empty && name2 == string.Empty)
                 {
-                    await RequestComparasign(name1, module, type, message);
+                    await RequestComparasign(name1, module, type, message, replyID);
                     return;
                 }
                 if(name1 != string.Empty && name2 != string.Empty)
                 {
-                    await RequestComparasign(name1, name2, module, type, message);
+                    await RequestComparasign(name1, name2, module, type, message, replyID);
                     return;
                 }
                 return;
             }
         }
-        public async Task RequestComparasign(string name, string module, string type, Message message)
+        public async Task RequestComparasign(string name, string module, string type, Message message, int replyID)
         {
                 Comparasign RequestComparasign = new Comparasign();
                 (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name);
@@ -134,8 +128,8 @@ namespace HWpicker_bot
                         Comparasign[]? phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
                         if(phoneComparisons is not null && phoneComparisons.Length == 1)
                         {
-                            await phoneComparisons[0].Phone1.GetCameraSpec();
-                            await phoneComparisons[0].Phone2.GetCameraSpec();
+                            await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone1);
+                            await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone2);
                         }
                         if(phoneComparisons is not null && type=="message")
                         {
@@ -143,17 +137,17 @@ namespace HWpicker_bot
                         }
                         if(phoneComparisons is not null && type=="update")
                         {
-                            tg.AllComparasignsByOnePhoneCallback(phoneComparisons, message);
+                            tg.AllComparasignsByOnePhoneCallback(phoneComparisons, message, replyID);
                         }
                     }
-                    else{tg.SendUserLog(answer, module, null, message);}
+                    else{tg.SendUserLog(answer, module, new Comparasign(), message);}
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {e.Message}");
                 }
         }
-        public async Task RequestComparasign(string name1, string name2, string module, string type, Message message)
+        public async Task RequestComparasign(string name1, string name2, string module, string type, Message message, int replyID)
         {
                 Comparasign RequestComparasign = new Comparasign();
                 (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name1);
@@ -167,8 +161,8 @@ namespace HWpicker_bot
 
                         if(phoneComparisons is not null && phoneComparisons.Length == 1)
                         {
-                            await phoneComparisons[0].Phone1.GetCameraSpec();
-                            await phoneComparisons[0].Phone2.GetCameraSpec();
+                            await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone1);
+                            await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone2);
                         }
                         if(phoneComparisons is not null && type=="message")
                         {
@@ -176,10 +170,10 @@ namespace HWpicker_bot
                         }
                         if(phoneComparisons is not null && type=="update")
                         {
-                            tg.AllInfoAboutComparasingCallback( phoneComparisons, message);
+                            tg.AllInfoAboutComparasingCallback( phoneComparisons, message, replyID);
                         }
                     }
-                    else{tg.SendUserLog(answer, module, null , message);}
+                    else{tg.SendUserLog(answer, module, new Comparasign() , message);}
                 }
                 catch (Exception e)
                 {
