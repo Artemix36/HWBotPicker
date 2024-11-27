@@ -185,53 +185,14 @@ namespace HW_picker_bot
                 if (receivedText == "покажи сравнения" || receivedText == "покажи мои сравнения")
                 {
                     Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
-                    comparator.comparasing_photo_read(telegram_bot, message, 1, message.MessageId);
+                    comparator.ComparasignFindAllInfo(interaction, interaction.Module[0]);
                     return;
-                }
-
-                if (receivedText.Contains("добавь отзыв на") || receivedText.Contains("добавить отзыв на"))
-                {
-                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
-                    try
-                    {
-                        messageForCallback = message;
-                        CheckMessage checker = new CheckMessage();
-                        string name = checker.GetReviewName(message.Text);
-
-                        if (name != null)
-                        {
-                            string[] buttons = new string[] { "Общая оценка", "Система", "Камера", "Батарея", "Экран" };
-
-                            for (int i = 0; i < buttons.Length; i++)
-                            {
-                                InlineKeyboardMarkup ikmReviews = (new[]
-                                {
-                                    new []
-                                    {
-                                    InlineKeyboardButton.WithCallbackData(text: "1", callbackData: $"{buttons[i]}: 1"),
-                                    InlineKeyboardButton.WithCallbackData(text: "2", callbackData: $"{buttons[i]}: 2"),
-                                    InlineKeyboardButton.WithCallbackData(text: "3", callbackData: $"{buttons[i]}: 3"),
-                                    InlineKeyboardButton.WithCallbackData(text: "4", callbackData: $"{buttons[i]}: 4"),
-                                    InlineKeyboardButton.WithCallbackData(text: "5", callbackData: $"{buttons[i]}: 5"),
-                                    },
-                                });
-                                await telegram_bot.SendMessage(message.Chat.Id, $"{buttons[i]}:", replyMarkup: ikmReviews);
-                            }
-                            ContextOfMsg messageWorker = MsgPool.getObj(update);
-                            messageWorker.SetValues(0, update, message);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.ToString());
-                        telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "Ошибка при добавлении");
-                    }
                 }
 
                 if (receivedText.Contains("покажи сравнение") || receivedText.Contains("покажи сравнения") || receivedText.Contains("покажи мои сравнения"))
                 {
                     Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
-                    comparator.ComparasignFindAllInfo(interaction);
+                    comparator.ComparasignFindAllInfo(interaction, interaction.Module[2]);
                     return;
                 }
 
@@ -252,7 +213,7 @@ namespace HW_picker_bot
 
                     interaction.CallbackQuery.Data = interaction.CallbackQuery.Data.Trim('[');
                     
-                    comparator.ComparasignFindAllInfo(interaction);
+                    comparator.ComparasignFindAllInfo(interaction, interaction.Module[2]);
 
                     try
                     {
@@ -266,10 +227,8 @@ namespace HW_picker_bot
                 if(callback.Data.Contains("page:"))
                 {
                     interaction.CallbackQuery.Data = interaction.CallbackQuery.Data.Replace("page:", "");
-                    int page_num;
-                    Int32.TryParse(callback.Data.Replace("page:", ""), out page_num);
 
-                    comparator.ComparasignFindAllInfo(interaction);
+                    comparator.ComparasignFindAllInfo(interaction, interaction.Module[0]);
 
                     try
                     {

@@ -39,28 +39,55 @@ namespace HWpicker_bot
         TGAPI tg = new TGAPI();
         SpecWriter_HTTP specWriter_HTTP = new SpecWriter_HTTP();
 
-        public void ComparasignFindAllInfo(Interactions interaction) //получение подробной информации о сравнении по кнопке из меню
+        public void ComparasignFindAllInfo(Interactions interaction, string module) //получение подробной информации о сравнении по кнопке из меню
         {
-            if(interaction.Message is not null )
+            if(interaction.Message is not null)
             {
-                Comparasign[] NeededComparasign = FindComaparsign(interaction.Message.Text).Result;
-                if(NeededComparasign[0].Phone1.Manufacturer == string.Empty && NeededComparasign[0].Phone1.Model == string.Empty)
+                if (module == "one_comp" || module == "all_by_one_comp")
                 {
-                    tg.SendUserLog("[ERROR] Сравнения не найдены", "read_comp", NeededComparasign[0], interaction.Message);
-                    return;
+                    Comparasign[] NeededComparasign = FindComaparsign(interaction.Message.Text).Result;
+                    if (NeededComparasign is not null && NeededComparasign[0].Phone1.Manufacturer == string.Empty && NeededComparasign[0].Phone1.Model == string.Empty)
+                    {
+                        tg.SendUserLog("[ERROR] Сравнения не найдены", "read_comp", NeededComparasign[0], interaction.Message);
+                        return;
+                    }
+                    tg.SendDataTable(NeededComparasign, interaction.Message);
                 }
-                tg.SendDataTable(NeededComparasign, interaction.Message);
+                if (module == "all_comp")
+                {
+                    Comparasign[] NeededComparasign = ReadAllComparasigns(interaction.From, 1);
+                    tg.ComparasignPagesSend(NeededComparasign, interaction.Message, 1);
+                }
             }
-            if(interaction.CallbackQuery is not null)
+
+            if (interaction.CallbackQuery is not null)
             {
-                Comparasign[] NeededComparasign = FindComaparsign(interaction.CallbackQuery.Data).Result;
-                if(NeededComparasign[0].Phone1.Manufacturer == string.Empty && NeededComparasign[0].Phone1.Model == string.Empty)
-                {
-                    tg.SendUserLog("[ERROR] Сравнения не найдены", "read_comp", NeededComparasign[0], interaction.CallbackQuery);
-                    return;
-                }
                 CallBackEditing callBackEditing = new CallBackEditing();
-                callBackEditing.AllInfoAboutComparasingCallback(NeededComparasign, interaction.CallbackQuery);
+                if (module == "one_comp" || module == "all_by_one_comp") 
+                {
+                    Comparasign[] NeededComparasign = FindComaparsign(interaction.CallbackQuery.Data).Result;
+
+                    if (NeededComparasign[0] is null)
+                    {
+                        tg.SendUserLog("[ERROR] Сравнения не найдены", "read_comp", NeededComparasign[0], interaction.CallbackQuery);
+                        return;
+                    }
+                    if (NeededComparasign.Length == 1)
+                    {
+                        callBackEditing.AllInfoAboutComparasingCallback(NeededComparasign, interaction.CallbackQuery);
+                    }
+                    else
+                    {
+                        callBackEditing.AllComparasignsByOnePhoneCallback(NeededComparasign, interaction.CallbackQuery);
+                    }
+                }
+                if (module == "all_comp")
+                {
+                    int page_num;
+                    Int32.TryParse(interaction.CallbackQuery.Data.Replace("page:", ""), out page_num);
+                    Comparasign[] NeededComparasign = ReadAllComparasigns(interaction.From, page_num);
+                    callBackEditing.ChangePageForComparasigns(NeededComparasign, interaction.CallbackQuery);
+                }
             }
         }
 
@@ -89,29 +116,26 @@ namespace HWpicker_bot
                 }
             }
         }
-        public void comparasing_photo_read(ITelegramBotClient telegram_bot, Message message, int page, int replyTo) //получениие всех сравнений по страницам
+        public Comparasign[] ReadAllComparasigns(string From, int page) //получениие всех сравнений по страницам
         {
-            if(message.From is not null && message.From.Username is not null)
+            string module = "read_all_comp";
+            string answer = db.GetComparasignsAsync(From, page).Result.Replace("\\", "");
+            try
             {
-                string module = "read_all_comp";
-                string answer = db.GetComparasignsAsync(message.From.Username, page).Result.Replace("\\", "");
-                try
+                if (!answer.Contains("ERROR"))
                 {
-                    if (!answer.Contains("ERROR"))
+                    Comparasign[]? phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
+                    if(phoneComparisons is not null)
                     {
-                        Comparasign[]? phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
-                        if(phoneComparisons is not null){tg.SendDataAllComparasigns(telegram_bot, phoneComparisons, message, page, replyTo);}
+                        return phoneComparisons;
                     }
-                    else
-                    {
-                        tg.SendUserLog(answer, module, new Comparasign(), message);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {answer} | {e.Message}");
                 }
             }
+            catch (Exception e)
+            {
+                Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {answer} | {e.Message}");
+            }
+            return new Comparasign[0];
         }
         public async Task<Comparasign[]> FindComaparsign(string Text)
         {

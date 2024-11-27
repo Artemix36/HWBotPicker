@@ -259,19 +259,14 @@ namespace HardWarePickerBot
                 return phone;
             }
         }
-        public async Task<string> AddSpec(string name, string specs) //Добавление характеристик камер в БД
+        public async Task<string> AddSpec(Phone phone) //Добавление характеристик камер в БД
         {
-            Console.WriteLine($"[INFO] Обращение в БД для добавления характеристик камеры {name}");
+            Console.WriteLine($"[INFO] Обращение в БД для добавления характеристик камеры {phone.Manufacturer} {phone.Model}");
             try
             {
                 var url = $"{DBBaseURL}/CameraSpec/Add";
                 HttpClient client = new HttpClient();
-                var jsonObject = new
-                {
-                    NameOfPhone = name,
-                    CameraSpec = specs,
-                };
-                string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(jsonObject);
+                string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(phone);
                 var request = new StringContent(jsonString, Encoding.UTF8, "application/json");
                 var res = await client.PutAsync(url, request);
                 var content = await res.Content.ReadAsStringAsync();

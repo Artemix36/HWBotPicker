@@ -26,6 +26,7 @@ namespace TelegramApi
         public Message? Message {get; set;}
         public CallbackQuery? CallbackQuery {get; set;}
         public string From {get; set;} = string.Empty;
+        public string[] Module { get; } = { "all_comp", "one_comp", "all_by_one_comp" };
     }
 
     internal class TGAPI
@@ -39,8 +40,9 @@ namespace TelegramApi
             try
             {
                 ComparasignPagesButtons comparasignPagesButtons = new ComparasignPagesButtons();
-                comparasignPagesButtons.CreateKeyboardButtons(phoneComparisons, page_now);
+                comparasignPagesButtons.CreateAllComparasignsButtons(phoneComparisons, page_now);
                 var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
+
                 sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения:", reply: message.MessageId, buttons: comp_buttons);
             }
             catch(Exception ex)
@@ -54,8 +56,8 @@ namespace TelegramApi
             try
             {
                 ComparasignPagesButtons comparasignPagesButtons = new ComparasignPagesButtons();
-                comparasignPagesButtons.CreateKeyboardButtons(phoneComparisons, page_now);
-                
+                comparasignPagesButtons.CreateAllComparasignsButtons(phoneComparisons, page_now);
+
                 var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
 
                 if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.Specs.CameraSpec != string.Empty && phoneComparisons[0].Phone2.Specs.CameraSpec != string.Empty)
@@ -64,7 +66,7 @@ namespace TelegramApi
                 }
                 else
                 {
-                    if(message.AuthorSignature == "CLBK")
+                    if (message.AuthorSignature == "CLBK")
                     {
                         telegram_bot.EditMessageReplyMarkup(message.Chat.Id, replyTo, replyMarkup: comp_buttons);
                     }
@@ -74,7 +76,7 @@ namespace TelegramApi
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] ошибка при отправке ответа: {ex.Message} {ex.Data}");
             }
@@ -232,7 +234,7 @@ namespace TelegramApi
             {
                 if(answer.Contains("ERROR"))
                 {
-                    sendMessage(telegram_bot, "text", callback.Message.Id, text: $"<blockquote>[ERROR]</blockquote><b>Сравнения не найдены</b>", reply: callback.Message.Id);
+                    sendMessage(telegram_bot, "text", callback.Message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Сравнения не найдены</b>", reply: callback.Message.Id);
                 }
             }
             if(module == "read_comp")
@@ -240,11 +242,11 @@ namespace TelegramApi
                 if(answer.Contains("ERROR"))
                 {
                     Console.WriteLine(answer);
-                    sendMessage(telegram_bot, "text", callback.Message.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: callback.Message.Id);
+                    sendMessage(telegram_bot, "text", callback.Message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: callback.Message.Id);
                 }
                 if(answer.Contains("BAD NAMES"))
                 {
-                    sendMessage(telegram_bot, "text", callback.Message.Id, text: $"<blockquote>[ERROR]</blockquote><b>Неверно введено имя сравнения или телефонов! Проверьте синтаксис!</b>", reply: callback.Message.Id);
+                    sendMessage(telegram_bot, "text", callback.Message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Неверно введено имя сравнения или телефонов! Проверьте синтаксис!</b>", reply: callback.Message.Id);
                 }
             }
         }

@@ -18,10 +18,10 @@ namespace HardWarePickerBot
         static public string? GSMarenaBotToken {get; set;}
         static public string? GSMarenaBotUrl {get; set;}
         static public TimeSpan timeout {get; set;} = new TimeSpan(0, 0, 10);
-        static private HttpClient client = new HttpClient();
         DB_HTTP_worker db = new DB_HTTP_worker(); 
         public async Task<string>FindAndWriteSpecs(string name1) //интеграция с GsmArenaBot
         {
+            HttpClient client = new HttpClient();
             client.Timeout = timeout;
             try
             {
@@ -48,16 +48,18 @@ namespace HardWarePickerBot
             {
                 DB_HTTP_worker db = new DB_HTTP_worker();
                 phone = await db.GetCameraSpec(phone);
-                if(phone.Specs.CameraSpec != string.Empty)
+                if(phone.Specs.CameraSpec != "Not Found")
                 {
                     Console.WriteLine($"[INFO] Найдены хар-ки камер для {phone.Manufacturer} {phone.Model} в базе данных {phone.Specs.CameraSpec}. Результат записан в объект.");
                     return phone;
                 }
                 else
                 {
+                    Console.WriteLine($"[INFO] Не найдены хар-ки камер для {phone.Manufacturer} {phone.Model} в базе данных. Обращение в GSMARENABOT");
                     SpecWriter_HTTP specWriter = new SpecWriter_HTTP();
                     string ResultFromGSM = await specWriter.FindAndWriteSpecs($"{phone.Manufacturer} {phone.Model}");
-                    phone.Specs.CameraSpec = ResultFromGSM;
+                    phone.Specs.CameraSpec =ResultFromGSM;
+                    await db.AddSpec(phone);
                     return phone;
                 }
             }
