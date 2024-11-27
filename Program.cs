@@ -132,6 +132,10 @@ namespace HW_picker_bot
         }
         async static Task ParseMessage(ITelegramBotClient telegram_bot, Message message, Update update)
         {
+            Interactions interaction = new Interactions();
+            interaction.Message = message;
+            interaction.From = $"{message.From.FirstName} {message.From.LastName} {message.From.Username}";
+
             if(message.Text is not null && message.From is not null)
             {
                 string receivedText = message.Text.ToLower();
@@ -227,7 +231,7 @@ namespace HW_picker_bot
                 if (receivedText.Contains("покажи сравнение") || receivedText.Contains("покажи сравнения") || receivedText.Contains("покажи мои сравнения"))
                 {
                     Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
-                    comparator.FindComaparsign(message, "message", message.MessageId);
+                    comparator.ComparasignFindAllInfo(interaction);
                     return;
                 }
 
@@ -236,18 +240,20 @@ namespace HW_picker_bot
 
        async static Task ParseCallback(ITelegramBotClient telegram_bot, Update update, CallbackQuery callback)
         {
+            Interactions interaction = new Interactions();
+            interaction.CallbackQuery = callback;
+            interaction.From = $"{callback.From.FirstName} {callback.From.LastName} {callback.From.Username}";
+            
             if(callback is not null && callback.Data is not null && callback.Message is not null)
             {
                 if(callback.Data.Contains('['))
                 {
                     Console.WriteLine($"[INFO] запрос поиска подробной информации по {callback.Data.Trim('[')}");
-                    Message message = new Message();
-                    message.Chat = callback.Message.Chat;
-                    message.From = callback.From;
-                    message.AuthorSignature = "CLBK";
-                    message.Text = $"покажи сравнение {callback.Data.Trim('[')}";
+
+                    interaction.CallbackQuery.Data = interaction.CallbackQuery.Data.Trim('[');
                     
-                    comparator.ComparasignFindAllInfo(telegram_bot, message, callback.Message.MessageId);
+                    comparator.ComparasignFindAllInfo(interaction);
+
                     try
                     {
                         await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
@@ -259,35 +265,46 @@ namespace HW_picker_bot
                 }
                 if(callback.Data.Contains("page:"))
                 {
-                    Message message = new Message();
-                    message.Chat = callback.Message.Chat;
-                    message.From = callback.From;
-                    message.AuthorSignature = "CLBK";
-                    message.Text = $"{callback.Data.Replace("page:", "")}";
+                    interaction.CallbackQuery.Data = interaction.CallbackQuery.Data.Replace("page:", "");
                     int page_num;
                     Int32.TryParse(callback.Data.Replace("page:", ""), out page_num);
-                    comparator.comparasing_photo_read(telegram_bot, message, page_num, callback.Message.MessageId);
-                    await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
+
+                    comparator.ComparasignFindAllInfo(interaction);
+
+                    try
+                    {
+                        await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
+                    }
+                    catch(Exception ex)
+                    {
+                        Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
+                    }
                 }
                 if(callback.Data == "/comparasign")
-                {
-                    Message message = new Message();
-                    message.Chat = callback.Message.Chat;
-                    message.From = callback.From;
-                    message.Text = $"{callback.Data}";
-                    
-                    telegram.SendComparasignMenu(telegram_bot, message, callback.Message.MessageId);
-                    await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
+                {   
+                    /* telegram.SendComparasignMenu(); */
+
+                    try
+                    {
+                        await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
+                    }
+                    catch(Exception ex)
+                    {
+                        Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
+                    }
                 }
                 if(callback.Data == "comp main menu")
-                {
-                    Message message = new Message();
-                    message.Chat = callback.Message.Chat;
-                    message.From = callback.From;
-                    message.Text = $"{callback.Data}";
-                    
-                    comparator.comparasing_photo_read(telegram_bot, message, 1, callback.Message.MessageId);
-                    await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
+                {                    
+                    /* comparator.comparasing_photo_read(telegram_bot, interaction, 1, callback.Message.MessageId); */
+
+                    try
+                    {
+                        await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
+                    }
+                    catch(Exception ex)
+                    {
+                        Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
+                    }
                 }
             }
         }

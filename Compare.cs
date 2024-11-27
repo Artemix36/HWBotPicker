@@ -27,6 +27,8 @@ using System.ComponentModel;
 using HWPickerClassesLibrary;
 using Org.BouncyCastle.Asn1.Misc;
 using ZstdSharp.Unsafe;
+using Microsoft.VisualBasic;
+using Mysqlx.Crud;
 
 namespace HWpicker_bot
 {
@@ -36,16 +38,32 @@ namespace HWpicker_bot
         DB_HTTP_worker db = new DB_HTTP_worker();
         TGAPI tg = new TGAPI();
         SpecWriter_HTTP specWriter_HTTP = new SpecWriter_HTTP();
-        public void ComparasignFindAllInfo(ITelegramBotClient telegram_bot, Message? message, int replyID) //получение подробной информации о сравнении по кнопке из меню
+
+        public void ComparasignFindAllInfo(Interactions interaction) //получение подробной информации о сравнении по кнопке из меню
         {
-            if(message is not null && message.Text is not null)
+            if(interaction.Message is not null )
             {
-                if(message.AuthorSignature == "CLBK")
+                Comparasign[] NeededComparasign = FindComaparsign(interaction.Message.Text).Result;
+                if(NeededComparasign[0].Phone1.Manufacturer == string.Empty && NeededComparasign[0].Phone1.Model == string.Empty)
                 {
-                    FindComaparsign(message, "update", replyID);
+                    tg.SendUserLog("[ERROR] Сравнения не найдены", "read_comp", NeededComparasign[0], interaction.Message);
+                    return;
                 }
+                tg.SendDataTable(NeededComparasign, interaction.Message);
+            }
+            if(interaction.CallbackQuery is not null)
+            {
+                Comparasign[] NeededComparasign = FindComaparsign(interaction.CallbackQuery.Data).Result;
+                if(NeededComparasign[0].Phone1.Manufacturer == string.Empty && NeededComparasign[0].Phone1.Model == string.Empty)
+                {
+                    tg.SendUserLog("[ERROR] Сравнения не найдены", "read_comp", NeededComparasign[0], interaction.CallbackQuery);
+                    return;
+                }
+                CallBackEditing callBackEditing = new CallBackEditing();
+                callBackEditing.AllInfoAboutComparasingCallback(NeededComparasign, interaction.CallbackQuery);
             }
         }
+
         public void comparasing_photo_write(ITelegramBotClient telegram_bot, Message? message) //добавление сравнения
         {
             Comparasign newComparasign = new Comparasign();
@@ -95,27 +113,25 @@ namespace HWpicker_bot
                 }
             }
         }
-        public async void FindComaparsign(Message message, string type, int replyID)
+        public async Task<Comparasign[]> FindComaparsign(string Text)
         {
-            string module = "read_comp";
-            if(message.Text != null)
+            if(Text != null)
             {
-                (string name1, string name2) = checker.ParseRequestName(message.Text);
+                (string name1, string name2) = checker.ParseRequestName(Text);
 
                 if(name1 != string.Empty && name2 == string.Empty)
                 {
-                    await RequestComparasign(name1, module, type, message, replyID);
-                    return;
+                    return await RequestComparasign(name1);
                 }
                 if(name1 != string.Empty && name2 != string.Empty)
                 {
-                    await RequestComparasign(name1, name2, module, type, message, replyID);
-                    return;
+                    return await RequestComparasign(name1, name2);
                 }
-                return;
+                return new Comparasign[1];
             }
+            return new Comparasign[1];
         }
-        public async Task RequestComparasign(string name, string module, string type, Message message, int replyID)
+        public async Task<Comparasign[]> RequestComparasign(string name)
         {
                 Comparasign RequestComparasign = new Comparasign();
                 (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name);
@@ -131,23 +147,17 @@ namespace HWpicker_bot
                             await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone1);
                             await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone2);
                         }
-                        if(phoneComparisons is not null && type=="message")
-                        {
-                            tg.SendDataTable(phoneComparisons, message);
-                        }
-                        if(phoneComparisons is not null && type=="update")
-                        {
-                            tg.AllComparasignsByOnePhoneCallback(phoneComparisons, message, replyID);
-                        }
+                        return phoneComparisons;
                     }
-                    else{tg.SendUserLog(answer, module, new Comparasign(), message);}
+                    return new Comparasign[1];
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {e.Message}");
                 }
+                return new Comparasign[1];
         }
-        public async Task RequestComparasign(string name1, string name2, string module, string type, Message message, int replyID)
+        public async Task<Comparasign[]> RequestComparasign(string name1, string name2)
         {
                 Comparasign RequestComparasign = new Comparasign();
                 (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name1);
@@ -164,21 +174,15 @@ namespace HWpicker_bot
                             phoneComparisons[0].Phone1 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone1);
                             phoneComparisons[0].Phone2 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone2);
                         }
-                        if(phoneComparisons is not null && type=="message")
-                        {
-                            tg.SendDataTable(phoneComparisons, message);
-                        }
-                        if(phoneComparisons is not null && type=="update")
-                        {
-                            tg.AllInfoAboutComparasingCallback( phoneComparisons, message, replyID);
-                        }
+                        return phoneComparisons;
                     }
-                    else{tg.SendUserLog(answer, module, new Comparasign() , message);}
+                    return new Comparasign[1];
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine($"[ERROR] ошибка при парсинге ответа от БД: {e.Message} с ответом: {answer}");
                 }
+                return new Comparasign[1];
         }
     }
 }
