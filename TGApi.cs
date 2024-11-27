@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using HW_picker_bot;
 using HWpicker_bot;
 using HWPickerClassesLibrary;
 using Telegram.Bot;
@@ -125,7 +126,9 @@ namespace TelegramApi
                 var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
                 if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.Specs.CameraSpec != string.Empty && phoneComparisons[0].Phone2.Specs.CameraSpec != string.Empty)
                 {
-                    await telegram_bot.EditMessageText(message.Chat.Id, replyID, $"Найденное сравнение:\n<blockquote><b><u>{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model} </u></b> - <i>{phoneComparisons[0].Phone1.Specs.CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model} </u></b> - <i>{phoneComparisons[0].Phone2.Specs.CameraSpec}</i></blockquote>", parseMode: ParseMode.Html);
+                    Answer answer = new Answer();
+                    string text = answer.OneCompMessage(phoneComparisons);
+                    await telegram_bot.EditMessageText(message.Chat.Id, replyID, text, parseMode: ParseMode.Html);
                     await telegram_bot.EditMessageReplyMarkup(message.Chat.Id, replyID, replyMarkup: comp_buttons);
                 }
                 else
@@ -139,7 +142,6 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] ошибка при отправке ответа: {ex.Message} {ex.Data}");
             }
         }
-
         public async void AllComparasignsByOnePhoneCallback(Comparasign[] phoneComparisons, Message message, int replyID)
         {
             try
@@ -155,9 +157,12 @@ namespace TelegramApi
                 }
                 var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
 
-                if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.Specs.CameraSpec != string.Empty && phoneComparisons[0].Phone2.Specs.CameraSpec != string.Empty)
+                if (phoneComparisons.Length <= 1)
                 {
-                    await telegram_bot.EditMessageText(message.Chat.Id, replyID, $"Найденное сравнение:\n<blockquote><b><u>{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model} </u></b> - <i>{phoneComparisons[0].Phone1.Specs.CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model} </u></b> - <i>{phoneComparisons[0].Phone2.Specs.CameraSpec}</i></blockquote>", parseMode: ParseMode.Html);
+                    Answer answer = new Answer();
+                    string text = answer.OneCompMessage(phoneComparisons);
+
+                    await telegram_bot.EditMessageText(message.Chat.Id, replyID, text, parseMode: ParseMode.Html);
                     await telegram_bot.EditMessageReplyMarkup(message.Chat.Id, replyID, replyMarkup: comp_buttons);
                 }
                 else

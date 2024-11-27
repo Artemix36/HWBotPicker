@@ -42,26 +42,26 @@ namespace HardWarePickerBot
                     return string.Empty;
                 }
         }
-        public async Task GetCameraSpec(Phone phone)//Получение харак-к камер для телефона
+        public async Task<Phone> GetCameraSpec(Phone phone)//Получение харак-к камер для телефона
         {
             if(phone.IsPhoneWritten())
             {
                 DB_HTTP_worker db = new DB_HTTP_worker();
-                string ResultFromDB = await db.GetCameraSpec($"{phone.Manufacturer} {phone.Model}");
-                if(ResultFromDB is not null)
+                phone = await db.GetCameraSpec(phone);
+                if(phone.Specs.CameraSpec != string.Empty)
                 {
-                    Console.WriteLine($"[INFO] Найдены хар-ки камер для {phone.Manufacturer} {phone.Model} в базе данных {ResultFromDB}. Результат записан в объект.");
-                    phone.Specs.CameraSpec = ResultFromDB;
-                    return;
+                    Console.WriteLine($"[INFO] Найдены хар-ки камер для {phone.Manufacturer} {phone.Model} в базе данных {phone.Specs.CameraSpec}. Результат записан в объект.");
+                    return phone;
                 }
                 else
                 {
                     SpecWriter_HTTP specWriter = new SpecWriter_HTTP();
                     string ResultFromGSM = await specWriter.FindAndWriteSpecs($"{phone.Manufacturer} {phone.Model}");
                     phone.Specs.CameraSpec = ResultFromGSM;
-                    return;
+                    return phone;
                 }
             }
+            return phone;
         }
         private string cleanupSpec(string content1)
         {

@@ -206,17 +206,18 @@ namespace HardWarePickerBot
                 return "[ERROR] Ошибка при обращении к БД";
             }
         }
-        public async Task<string> GetCameraSpec(string name) //Получаем есть ли характеристики камеры в БД
+        public async Task<Phone> GetCameraSpec(Phone phone) //Получаем есть ли характеристики камеры в БД
         {
-            Console.WriteLine($"[INFO] Обращение в БД для поиска Характеристик Камер {name}..");
-            if (name != null)
+            Console.WriteLine($"[INFO] Обращение в БД для поиска Характеристик {phone.Manufacturer} {phone.Model}..");
+            if (phone.Model != string.Empty)
             {
                 try
                 {
-                    var url = $"{DBBaseURL}/CameraSpec/Get/{name}";
+                    var url = $"{DBBaseURL}/Spec/Get";
                     HttpClient client = new HttpClient();
-                    var msg = new HttpRequestMessage(HttpMethod.Get, url);
-                    var res = await client.SendAsync(msg);
+                    string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(phone);
+                    var request = new StringContent(jsonString, Encoding.UTF8, "application/json");
+                    var res = await client.PostAsync(url, request);
                     var content = await res.Content.ReadAsStringAsync();
 
                     if(res.StatusCode == HttpStatusCode.OK)
@@ -224,37 +225,38 @@ namespace HardWarePickerBot
                         client.Dispose();
                         content = content.Trim('"');
                         content = Regex.Unescape(content);
-                        CamSpec[]? camSpec = JsonConvert.DeserializeObject<CamSpec[]>(content);
-                        if(camSpec is not null && camSpec[0].CameraSpec is not null){return camSpec[0].CameraSpec.ToString();}else{return string.Empty;}
+                        content = content.Replace("\\", "");
+                        Phone foundPhone = JsonConvert.DeserializeObject<Phone>(content);  
+                        return foundPhone;
                     }
                     if(res.StatusCode == HttpStatusCode.NotFound)
                     {
                         Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
                         client.Dispose();
-                        return string.Empty;
+                        return phone;
                     }
                     if(res.StatusCode == HttpStatusCode.InternalServerError)
                     {
                         Console.WriteLine($"[ERROR] Внутренняя ошибка на стороне БД {res.StatusCode} Ответ: {content}");
                         client.Dispose();
-                        return "[ERROR] Не получилось найти характеристики камеры";
+                        return phone;
                     }
                     else
                     {
                         Console.WriteLine($"[ERROR] Непонятная ошибка {res.StatusCode}");
                         client.Dispose();
-                        return "[ERROR] Не обработанная ошибка";
+                        return phone;
                     }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("[ERROR] ошибка при получении характеристик камер от БД " + ex.Message);
-                    return ("[ERROR] Ошибка при обращении к БД");
+                    return (phone);
                 }
             }
             else
             {
-                return string.Empty;
+                return phone;
             }
         }
         public async Task<string> AddSpec(string name, string specs) //Добавление характеристик камер в БД

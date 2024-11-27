@@ -161,12 +161,12 @@ namespace HWpicker_bot
 
                         if(phoneComparisons is not null && phoneComparisons.Length == 1)
                         {
-                            await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone1);
-                            await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone2);
+                            phoneComparisons[0].Phone1 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone1);
+                            phoneComparisons[0].Phone2 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone2);
                         }
                         if(phoneComparisons is not null && type=="message")
                         {
-                            tg.SendDataTable( phoneComparisons, message);
+                            tg.SendDataTable(phoneComparisons, message);
                         }
                         if(phoneComparisons is not null && type=="update")
                         {
