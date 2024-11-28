@@ -128,7 +128,7 @@ namespace HardWarePickerBot
             string ProcessedText = text.ToLower().Replace("покажи сравнение ","");
             if(ProcessedText.Contains("vs"))
             {
-                string pattern = $@"^({string.Join("|", startWords)})(\s(\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
+                string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
                 Regex regex = new Regex(pattern);
                 string[] words = ProcessedText.Split(" vs ");
                 if(regex.IsMatch(words[0].Trim(' ')) && regex.IsMatch(words[1].Trim(' ')))

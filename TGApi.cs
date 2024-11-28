@@ -119,11 +119,14 @@ namespace TelegramApi
         {
             try
             {
-                List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
-                comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"Показать все сравнения", "comp main menu")});
-                var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
+                if(callbackQuery.Message is not null)
+                {
+                    List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
+                    comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"Показать все сравнения", "comp main menu")});
+                    var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
 
-                sendMessage(telegram_bot, "text", callbackQuery.Message.Chat.Id, text: ComparasignModuleMessage, reply: callbackQuery.Message.Id, buttons: comp_buttons);
+                    sendMessage(telegram_bot, "text", callbackQuery.Message.Chat.Id, text: ComparasignModuleMessage, reply: callbackQuery.Message.Id, buttons: comp_buttons);
+                }
             }
             catch(Exception ex)
             {
@@ -215,23 +218,26 @@ namespace TelegramApi
         {
             Compare compare = new Compare();
 
-            if(module == "read_all_comp")
+            if(callback.Message is not null)
             {
-                if(answer.Contains("ERROR"))
+                if(module == "read_all_comp")
                 {
-                    sendMessage(telegram_bot, "text", callback.Message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Сравнения не найдены</b>", reply: callback.Message.Id);
+                    if(answer.Contains("ERROR"))
+                    {
+                        sendMessage(telegram_bot, "text", callback.Message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Сравнения не найдены</b>", reply: callback.Message.Id);
+                    }
                 }
-            }
-            if(module == "read_comp")
-            {
-                if(answer.Contains("ERROR"))
+                if(module == "read_comp")
                 {
-                    Console.WriteLine(answer);
-                    sendMessage(telegram_bot, "text", callback.Message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: callback.Message.Id);
-                }
-                if(answer.Contains("BAD NAMES"))
-                {
-                    sendMessage(telegram_bot, "text", callback.Message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Неверно введено имя сравнения или телефонов! Проверьте синтаксис!</b>", reply: callback.Message.Id);
+                    if(answer.Contains("ERROR"))
+                    {
+                        Console.WriteLine(answer);
+                        sendMessage(telegram_bot, "text", callback.Message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Не найдены подобные сравнения</b>", reply: callback.Message.Id);
+                    }
+                    if(answer.Contains("BAD NAMES"))
+                    {
+                        sendMessage(telegram_bot, "text", callback.Message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Неверно введено имя сравнения или телефонов! Проверьте синтаксис!</b>", reply: callback.Message.Id);
+                    }
                 }
             }
         }

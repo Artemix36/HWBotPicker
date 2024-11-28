@@ -134,10 +134,9 @@ namespace HW_picker_bot
         {
             Interactions interaction = new Interactions();
             interaction.Message = message;
-            interaction.From = $"{message.From.FirstName} {message.From.LastName} {message.From.Username}";
-
             if(message.Text is not null && message.From is not null)
             {
+                interaction.From = $"{message.From.FirstName} {message.From.LastName} {message.From.Username}";
                 string receivedText = message.Text.ToLower();
 
                 if(receivedText == "/start" || receivedText == "/start@hw_picker_bot")
@@ -205,11 +204,11 @@ namespace HW_picker_bot
             interaction.CallbackQuery = callback;
             interaction.From = $"{callback.From.FirstName} {callback.From.LastName} {callback.From.Username}";
             
-            if(callback is not null && callback.Data is not null && callback.Message is not null)
+            if(interaction.CallbackQuery is not null && interaction.CallbackQuery.Data is not null && interaction.CallbackQuery.Message is not null)
             {
-                if(callback.Data.Contains('['))
+                if(interaction.CallbackQuery.Data.Contains('['))
                 {
-                    Console.WriteLine($"[INFO] запрос поиска подробной информации по {callback.Data.Trim('[')}");
+                    Console.WriteLine($"[INFO] запрос поиска подробной информации по {interaction.CallbackQuery.Data.Trim('[')}");
 
                     interaction.CallbackQuery.Data = interaction.CallbackQuery.Data.Trim('[');
                     
@@ -224,7 +223,7 @@ namespace HW_picker_bot
                         Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
                     }
                 }
-                if(callback.Data.Contains("page:"))
+                if(interaction.CallbackQuery.Data.Contains("page:"))
                 {
                     interaction.CallbackQuery.Data = interaction.CallbackQuery.Data.Replace("page:", "");
 

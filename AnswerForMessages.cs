@@ -74,25 +74,6 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] ошибка при изменении ответа: {ex.Message} {ex.Data}");
             }
         }
-
-        public async void ChangePageForComparasigns(Comparasign[] phoneComparisons, CallbackQuery callbackQuery) 
-        {
-            try
-            {
-                int page_num;
-                Int32.TryParse(callbackQuery.Data.Replace("page:", ""), out page_num);
-                ComparasignPagesButtons comparasignPagesButtons = new ComparasignPagesButtons();
-                comparasignPagesButtons.CreateAllComparasignsButtons(phoneComparisons, page_num);
-
-                var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
-
-                await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ERROR] ошибка при изменении ответа: {ex.Message} {ex.Data}");
-            }
-        }
     
     }
 

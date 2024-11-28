@@ -27,22 +27,25 @@ namespace TelegramApi
         {
             try
             {
-                ComparasignPagesButtons comparasignPagesButtons = new ComparasignPagesButtons();
-                comparasignPagesButtons.CreateOneCompButtons(phoneComparisons);
-                var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
-
-                if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.Specs.CameraSpec != string.Empty && phoneComparisons[0].Phone2.Specs.CameraSpec != string.Empty)
+                if(callbackQuery.Message is not null)
                 {
-                    Answer answer = new Answer();
-                    string text = answer.OneCompMessage(phoneComparisons);
+                    ComparasignPagesButtons comparasignPagesButtons = new ComparasignPagesButtons();
+                    comparasignPagesButtons.CreateOneCompButtons(phoneComparisons);
+                    var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
 
-                    await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id ,callbackQuery.Message.Id, text, parseMode: ParseMode.Html);
-                    await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
-                }
-                else
-                {
-                    await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, text: $"Найденные сравнения:", parseMode: ParseMode.Html);
-                    await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
+                    if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.Specs.CameraSpec != string.Empty && phoneComparisons[0].Phone2.Specs.CameraSpec != string.Empty)
+                    {
+                        Answer answer = new Answer();
+                        string text = answer.OneCompMessage(phoneComparisons);
+
+                        await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id ,callbackQuery.Message.Id, text, parseMode: ParseMode.Html);
+                        await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
+                    }
+                    else
+                    {
+                        await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, text: $"Найденные сравнения:", parseMode: ParseMode.Html);
+                        await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
+                    }
                 }
             }
             catch(Exception ex)
@@ -55,22 +58,25 @@ namespace TelegramApi
         {
             try
             {
-                ComparasignPagesButtons comparasignPagesButtons = new ComparasignPagesButtons();
-                comparasignPagesButtons.CreateAllComparasignsButtons(phoneComparisons, null);
-                var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
-
-                if (phoneComparisons.Length <= 1)
+                if(callbackQuery.Message is not null)
                 {
-                    Answer answer = new Answer();
-                    string text = answer.OneCompMessage(phoneComparisons);
+                    ComparasignPagesButtons comparasignPagesButtons = new ComparasignPagesButtons();
+                    comparasignPagesButtons.CreateAllComparasignsButtons(phoneComparisons, null);
+                    var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
 
-                    await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, text, parseMode: ParseMode.Html);
-                    await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
-                }
-                else
-                {
-                    await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, text: $"Найденные сравнения:", parseMode: ParseMode.Html);
-                    await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
+                    if (phoneComparisons.Length <= 1)
+                    {
+                        Answer answer = new Answer();
+                        string text = answer.OneCompMessage(phoneComparisons);
+
+                        await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, text, parseMode: ParseMode.Html);
+                        await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
+                    }
+                    else
+                    {
+                        await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, text: $"Найденные сравнения:", parseMode: ParseMode.Html);
+                        await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
+                    }
                 }
             }
             catch(Exception ex)
@@ -83,15 +89,18 @@ namespace TelegramApi
         {
             try
             {
-                int page_num;
-                Int32.TryParse(callbackQuery.Data.Replace("page:", ""), out page_num);
-                ComparasignPagesButtons comparasignPagesButtons = new ComparasignPagesButtons();
-                comparasignPagesButtons.CreateAllComparasignsButtons(phoneComparisons, page_num);
+                if(callbackQuery.Data is not null && callbackQuery.Message is not null)
+                {
+                    int page_num;
+                    Int32.TryParse(callbackQuery.Data.Replace("page:", ""), out page_num);
+                    ComparasignPagesButtons comparasignPagesButtons = new ComparasignPagesButtons();
+                    comparasignPagesButtons.CreateAllComparasignsButtons(phoneComparisons, page_num);
 
-                var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
+                    var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
 
-                await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, text: $"Найденные сравнения:", parseMode: ParseMode.Html);
-                await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
+                    await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, text: $"Найденные сравнения:", parseMode: ParseMode.Html);
+                    await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
+                }
             }
             catch (Exception ex)
             {

@@ -130,7 +130,6 @@ namespace HWpicker_bot
         }
         public Comparasign[] ReadAllComparasigns(string From, int page) //получениие всех сравнений по страницам
         {
-            string module = "read_all_comp";
             string answer = db.GetComparasignsAsync(From, page).Result.Replace("\\", "");
             try
             {
@@ -167,7 +166,7 @@ namespace HWpicker_bot
             }
             return new Comparasign[1];
         }
-        public async Task<Comparasign[]> RequestComparasign(string name) //Запрос сравнения по одном имени в БД + Хар-К в БД или GsmArenaBot
+        public async Task<Comparasign[]?> RequestComparasign(string name) //Запрос сравнения по одном имени в БД + Хар-К в БД или GsmArenaBot
         {
                 Comparasign RequestComparasign = new Comparasign();
                 (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name);
