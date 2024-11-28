@@ -150,7 +150,7 @@ namespace HW_picker_bot
                 if(receivedText == "/comparasign" || receivedText == "/comparasign@hw_picker_bot")
                 {
                     Console.WriteLine($"[INFO] Запрошено меню сравнения через {receivedText}");
-                    telegram.SendComparasignMenu(telegram_bot, message, message.MessageId);
+                    telegram.SendComparasignMenu(message);
                     return;
                 }
 
@@ -198,8 +198,8 @@ namespace HW_picker_bot
 
             }
         }
-
-       async static Task ParseCallback(ITelegramBotClient telegram_bot, Update update, CallbackQuery callback)
+        
+        async static Task ParseCallback(ITelegramBotClient telegram_bot, Update update, CallbackQuery callback)
         {
             Interactions interaction = new Interactions();
             interaction.CallbackQuery = callback;
@@ -241,7 +241,7 @@ namespace HW_picker_bot
                 }
                 if(callback.Data == "/comparasign")
                 {   
-                    /* telegram.SendComparasignMenu(); */
+                    telegram.SendComparasignMenu(interaction.CallbackQuery);
 
                     try
                     {
@@ -253,8 +253,9 @@ namespace HW_picker_bot
                     }
                 }
                 if(callback.Data == "comp main menu")
-                {                    
-                    /* comparator.comparasing_photo_read(telegram_bot, interaction, 1, callback.Message.MessageId); */
+                {    
+                    interaction.CallbackQuery.Data = "1";
+                    comparator.ComparasignFindAllInfo(interaction, interaction.Module[0]);
 
                     try
                     {

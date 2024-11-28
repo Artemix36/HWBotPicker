@@ -51,36 +51,6 @@ namespace TelegramApi
             }
         }
 
-        public void SendDataAllComparasigns(ITelegramBotClient telegram_bot, Comparasign[] phoneComparisons, Message message, int page_now, int replyTo)//отправить все найденные сравнения
-        {
-            try
-            {
-                ComparasignPagesButtons comparasignPagesButtons = new ComparasignPagesButtons();
-                comparasignPagesButtons.CreateAllComparasignsButtons(phoneComparisons, page_now);
-
-                var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
-
-                if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.Specs.CameraSpec != string.Empty && phoneComparisons[0].Phone2.Specs.CameraSpec != string.Empty)
-                {
-                    sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденное сравнение:\n<blockquote><b><u>{phoneComparisons[0].Phone1.Manufacturer} {phoneComparisons[0].Phone1.Model} </u></b> - <i>{phoneComparisons[0].Phone1.Specs.CameraSpec}</i></blockquote>\n\n<blockquote><b><u>{phoneComparisons[0].Phone2.Manufacturer} {phoneComparisons[0].Phone2.Model} </u></b> - <i>{phoneComparisons[0].Phone2.Specs.CameraSpec}</i></blockquote>", reply: message.MessageId, buttons: comp_buttons);
-                }
-                else
-                {
-                    if (message.AuthorSignature == "CLBK")
-                    {
-                        telegram_bot.EditMessageReplyMarkup(message.Chat.Id, replyTo, replyMarkup: comp_buttons);
-                    }
-                    else
-                    {
-                        sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения:", reply: message.MessageId, buttons: comp_buttons);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ERROR] ошибка при отправке ответа: {ex.Message} {ex.Data}");
-            }
-        }
         public void SendDataTable(Comparasign[] phoneComparisons, Message message) //отправить найденные сравнения
         {
             try
@@ -130,7 +100,7 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] Не получилось отправить меню {ex.Message}");
             }
         }
-        public void SendComparasignMenu(ITelegramBotClient telegram_bot, Message message, int replyTo) //отправить меню сравнений
+        public void SendComparasignMenu(Message message) //отправить меню сравнений
         {
             try
             {
@@ -138,14 +108,29 @@ namespace TelegramApi
                 comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"Показать все сравнения", "comp main menu")});
                 var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
 
-                sendMessage(telegram_bot, "text", message.Chat.Id, text: ComparasignModuleMessage, reply: replyTo, buttons: comp_buttons);
+                sendMessage(telegram_bot, "text", message.Chat.Id, text: ComparasignModuleMessage, reply: message.Id, buttons: comp_buttons);
             }
             catch(Exception ex)
             {
                 Console.WriteLine($"[ERROR] Не получилось отправить меню {ex.Message}");
             }
         }
-              
+        public void SendComparasignMenu(CallbackQuery callbackQuery) //отправить меню сравнений
+        {
+            try
+            {
+                List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
+                comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"Показать все сравнения", "comp main menu")});
+                var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
+
+                sendMessage(telegram_bot, "text", callbackQuery.Message.Chat.Id, text: ComparasignModuleMessage, reply: callbackQuery.Message.Id, buttons: comp_buttons);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Не получилось отправить меню {ex.Message}");
+            }
+        }
+        
        //Делал Адам
         public async void sendMessage(ITelegramBotClient bot, string type, long peer_id, int? reply = null, string? text = null, string? photo = null, string? document = null, InlineKeyboardMarkup? buttons = null)
         {

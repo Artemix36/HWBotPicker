@@ -41,14 +41,25 @@ namespace HWpicker_bot
 
         public void ComparasignFindAllInfo(Interactions interaction, string module) //получение подробной информации о сравнении по кнопке из меню
         {
+            MessageSending messageSending = new MessageSending();
             if(interaction.Message is not null)
             {
                 if (module == "one_comp" || module == "all_by_one_comp")
                 {
                     Comparasign[] NeededComparasign = FindComaparsign(interaction.Message.Text).Result;
-                    if (NeededComparasign is not null && NeededComparasign[0].Phone1.Manufacturer == string.Empty && NeededComparasign[0].Phone1.Model == string.Empty)
+                    if (NeededComparasign[0] is null)
                     {
                         tg.SendUserLog("[ERROR] Сравнения не найдены", "read_comp", NeededComparasign[0], interaction.Message);
+                        return;
+                    }
+                    if (NeededComparasign.Length == 1)
+                    {
+                        messageSending.AllInfoAboutComparasingCallback(NeededComparasign, interaction.Message);
+                        return;
+                    }
+                    if (NeededComparasign.Length > 1)
+                    {
+                        messageSending.AllComparasignsByOnePhoneCallback(NeededComparasign, interaction.Message);
                         return;
                     }
                     tg.SendDataTable(NeededComparasign, interaction.Message);
@@ -75,10 +86,12 @@ namespace HWpicker_bot
                     if (NeededComparasign.Length == 1)
                     {
                         callBackEditing.AllInfoAboutComparasingCallback(NeededComparasign, interaction.CallbackQuery);
+                        return;
                     }
-                    else
+                    if (NeededComparasign.Length > 1)
                     {
                         callBackEditing.AllComparasignsByOnePhoneCallback(NeededComparasign, interaction.CallbackQuery);
+                        return;
                     }
                 }
                 if (module == "all_comp")
@@ -90,7 +103,6 @@ namespace HWpicker_bot
                 }
             }
         }
-
         public void comparasing_photo_write(ITelegramBotClient telegram_bot, Message? message) //добавление сравнения
         {
             Comparasign newComparasign = new Comparasign();
@@ -137,7 +149,7 @@ namespace HWpicker_bot
             }
             return new Comparasign[0];
         }
-        public async Task<Comparasign[]> FindComaparsign(string Text)
+        public async Task<Comparasign[]> FindComaparsign(string Text) //Оркестратор поиска сравнений по одному или двумя именам
         {
             if(Text != null)
             {
@@ -155,7 +167,7 @@ namespace HWpicker_bot
             }
             return new Comparasign[1];
         }
-        public async Task<Comparasign[]> RequestComparasign(string name)
+        public async Task<Comparasign[]> RequestComparasign(string name) //Запрос сравнения по одном имени в БД + Хар-К в БД или GsmArenaBot
         {
                 Comparasign RequestComparasign = new Comparasign();
                 (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name);
@@ -168,8 +180,8 @@ namespace HWpicker_bot
                         Comparasign[]? phoneComparisons = JsonConvert.DeserializeObject<Comparasign[]>(answer.Trim('"'));
                         if(phoneComparisons is not null && phoneComparisons.Length == 1)
                         {
-                            await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone1);
-                            await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone2);
+                            phoneComparisons[0].Phone1 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone1);
+                            phoneComparisons[0].Phone2 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone2);
                         }
                         return phoneComparisons;
                     }
@@ -181,7 +193,7 @@ namespace HWpicker_bot
                 }
                 return new Comparasign[1];
         }
-        public async Task<Comparasign[]> RequestComparasign(string name1, string name2)
+        public async Task<Comparasign[]> RequestComparasign(string name1, string name2) //Запрос сравнения по двум именам в БД + Хар-К в БД или GsmArenaBot
         {
                 Comparasign RequestComparasign = new Comparasign();
                 (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name1);

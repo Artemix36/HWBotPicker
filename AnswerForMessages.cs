@@ -21,9 +21,9 @@ using static HWpicker_bot.Compare;
 
 namespace TelegramApi
 {
-    internal class CallBackEditing
+    internal class MessageSending
     {
-        public async void AllInfoAboutComparasingCallback(Comparasign[] phoneComparisons, CallbackQuery callbackQuery) //Подробная информация о сравнении по нажатию кнопки
+        public async void AllInfoAboutComparasingCallback(Comparasign[] phoneComparisons, Message Message) //Подробная информация о сравнении по сообщению
         {
             try
             {
@@ -31,18 +31,16 @@ namespace TelegramApi
                 comparasignPagesButtons.CreateOneCompButtons(phoneComparisons);
                 var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
 
-                if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.Specs.CameraSpec != string.Empty && phoneComparisons[0].Phone2.Specs.CameraSpec != string.Empty)
+                if (phoneComparisons[0].Phone1.Specs.CameraSpec != string.Empty && phoneComparisons[0].Phone2.Specs.CameraSpec != string.Empty)
                 {
                     Answer answer = new Answer();
                     string text = answer.OneCompMessage(phoneComparisons);
 
-                    await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id ,callbackQuery.Message.Id, text, parseMode: ParseMode.Html);
-                    await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
+                    await TGAPI.telegram_bot.SendMessage(Message.Chat.Id, text, parseMode: ParseMode.Html, replyMarkup: comp_buttons);
                 }
                 else
                 {
-                    await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, text: $"Найденные сравнения:", parseMode: ParseMode.Html);
-                    await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
+                    await TGAPI.telegram_bot.SendMessage(Message.Chat.Id, "Найденные сравнения:", parseMode: ParseMode.Html, replyMarkup: comp_buttons);
                 }
             }
             catch(Exception ex)
@@ -51,7 +49,7 @@ namespace TelegramApi
             }
         }
 
-        public async void AllComparasignsByOnePhoneCallback(Comparasign[] phoneComparisons, CallbackQuery callbackQuery) //Показать все сравнения по телефону
+        public async void AllComparasignsByOnePhoneCallback(Comparasign[] phoneComparisons, Message Message) //Показать все сравнения по телефону
         {
             try
             {
@@ -64,13 +62,11 @@ namespace TelegramApi
                     Answer answer = new Answer();
                     string text = answer.OneCompMessage(phoneComparisons);
 
-                    await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, text, parseMode: ParseMode.Html);
-                    await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
+                    await TGAPI.telegram_bot.SendMessage(Message.Chat.Id, text, parseMode: ParseMode.Html, replyMarkup: comp_buttons);
                 }
                 else
                 {
-                    await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, text: $"Найденные сравнения:", parseMode: ParseMode.Html);
-                    await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
+                    await TGAPI.telegram_bot.SendMessage(Message.Chat.Id, "Найденные сравнения:", parseMode: ParseMode.Html, replyMarkup: comp_buttons);
                 }
             }
             catch(Exception ex)
@@ -90,7 +86,6 @@ namespace TelegramApi
 
                 var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
 
-                await TGAPI.telegram_bot.EditMessageText(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, text: $"Найденные сравнения:", parseMode: ParseMode.Html);
                 await TGAPI.telegram_bot.EditMessageReplyMarkup(callbackQuery.Message.Chat.Id, callbackQuery.Message.Id, replyMarkup: comp_buttons);
             }
             catch (Exception ex)

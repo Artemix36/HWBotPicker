@@ -107,11 +107,13 @@ namespace HardWarePickerBot
             Console.WriteLine("[ERROR] message was nulls");
             return (string.Empty, string.Empty, string.Empty, string.Empty);
         }
-        public (string, string) GetManufacturerAndModel(string name){
+        public (string, string) GetManufacturerAndModel(string name)//Найти производителя и модель
+        {
             string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
             Regex regex = new Regex(pattern);
             Match Name1Match = regex.Match(name.ToLower());
 
+            
             if (regex.IsMatch(name.ToLower()))
             {
                 return (Name1Match.Groups[1].Value.Trim(' '), Name1Match.Groups[2].Value.Trim(' '));
@@ -121,12 +123,12 @@ namespace HardWarePickerBot
                 return (string.Empty, string.Empty);
             }
         }
-        public (string, string) ParseRequestName(string text)
+        public (string, string) ParseRequestName(string text)//Найти два или одно полное имя телефона
         {
             string ProcessedText = text.ToLower().Replace("покажи сравнение ","");
             if(ProcessedText.Contains("vs"))
             {
-                string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
+                string pattern = $@"^({string.Join("|", startWords)})(\s(\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
                 Regex regex = new Regex(pattern);
                 string[] words = ProcessedText.Split(" vs ");
                 if(regex.IsMatch(words[0].Trim(' ')) && regex.IsMatch(words[1].Trim(' ')))
@@ -142,10 +144,9 @@ namespace HardWarePickerBot
             {
                 string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
                 Regex regex = new Regex(pattern);
-                string[] words = ProcessedText.Split(" ");
-                if(regex.IsMatch(words[0].Trim(' ')))
+                if(regex.IsMatch(ProcessedText.Trim(' ')))
                 {
-                    return (words[0], string.Empty);
+                    return (ProcessedText, string.Empty);
                 }
                 else
                 {
@@ -153,59 +154,6 @@ namespace HardWarePickerBot
                 }
             }
             return (string.Empty, string.Empty);
-        }
-        public (string, string) GetFindComparasignName(string? msg) //получение имени сравнения при поиске
-        {
-            if(msg is not null)
-            {
-                string patternEasy = @"^покажи\s+(?:мои\s+)?(?:сравнение|сравнения)\s+([a-zA-Z0-9\s]{1,20})(?:\s+vs\s+([a-zA-Z0-9\s]{1,20}))?$";
-                string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
-                Regex regex = new Regex(pattern);
-                Regex regexEasy = new Regex(patternEasy);
-                Match MatchEasy = regexEasy.Match(msg.ToLower());
-
-                if (MatchEasy.Groups[1].Success && MatchEasy.Groups[2].Success) 
-                {
-                    string name1 = CompareLevDistance(MatchEasy.Groups[1].Value.ToLower());
-                    string name2 = CompareLevDistance(MatchEasy.Groups[2].Value.ToLower());
-
-                    if (regex.IsMatch(name1) && regex.IsMatch(name2))
-                    {
-                        return (name1, name2);
-                    }
-                    else
-                    {
-                        Console.WriteLine("[INFO] Phone names are written badly!");
-                        return (string.Empty, string.Empty);
-                    }
-                }
-                else if(MatchEasy.Groups[1].Success)
-                {
-                    string name1 = CompareLevDistance(MatchEasy.Groups[1].Value.ToLower());
-
-                    if (regex.IsMatch(name1))
-                    {
-                        return (name1, string.Empty);
-                    }
-                    else
-                    {
-                        Console.WriteLine("[INFO] Phone names are written badly!");
-                        return (string.Empty, string.Empty);
-                    }
-                }
-                else
-                {
-                    return (string.Empty, string.Empty);;
-                }
-            }
-            Console.WriteLine("[ERROR] сообщение пустое");
-            return (string.Empty, string.Empty);;
-        } 
-        public string GetReviewName(string msg) //получение имени отзыва
-        {
-            string pattern = $@"^({string.Join("|", startWords)})(\s+\d{{1,2}}\s?[\sa-zA-Z]{{0,10}})?$";
-            
-            return string.Empty;
         }
         public string GetLink(string msg) //Получение ссылки на сравнение
         {
@@ -220,6 +168,15 @@ namespace HardWarePickerBot
             {
                 return "error";
             }
+        }
+        
+        
+        //Секция с отзывами на телефоны пока что не переработана #TO BE DONE
+        public string GetReviewName(string msg) //получение имени отзыва
+        {
+            string pattern = $@"^({string.Join("|", startWords)})(\s+\d{{1,2}}\s?[\sa-zA-Z]{{0,10}})?$";
+            
+            return string.Empty;
         }
         internal int GetRate(string[] msg) //to be reviewed
         {
@@ -237,5 +194,5 @@ namespace HardWarePickerBot
             }
             return 0;
         }
-     }
+    }
 }
