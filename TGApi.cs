@@ -26,6 +26,7 @@ namespace TelegramApi
         public Message? Message {get; set;}
         public CallbackQuery? CallbackQuery {get; set;}
         public string From {get; set;} = string.Empty;
+        public string PreviousFrom {get; set;} = string.Empty;
         public string[] Module { get; } = { "all_comp", "one_comp", "all_by_one_comp" };
     }
 
@@ -35,7 +36,7 @@ namespace TelegramApi
         public static string? ComparasignModuleMessage {get; set;} = string.Empty;
         public static ITelegramBotClient telegram_bot {get; set;}
         
-        public void ComparasignPagesSend(Comparasign[] phoneComparisons, Message message, int page_now)//для отправки всех сравнений НОВОЕ
+        public async void ComparasignPagesSend(Comparasign[] phoneComparisons, Message message, int page_now)//для отправки всех сравнений НОВОЕ
         {
             try
             {
@@ -43,15 +44,17 @@ namespace TelegramApi
                 comparasignPagesButtons.CreateAllComparasignsButtons(phoneComparisons, page_now);
                 var comp_buttons = new InlineKeyboardMarkup(comparasignPagesButtons.ComparasignButtons.Select(a => a.ToArray()).ToArray());
 
-                sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения:", reply: message.MessageId, buttons: comp_buttons);
+                Interactions interaction = new Interactions();
+                interaction.Message  = await TGAPI.telegram_bot.SendMessage(message.Chat.Id, "Найденные сравнения:", parseMode: ParseMode.Html, replyMarkup: comp_buttons);
+                interaction.PreviousFrom = $"{message.From.Id} {message.From.Username}";
+                Program.CallbackInteractions.Add(interaction);
             }
             catch(Exception ex)
             {
                 Console.WriteLine($"[ERROR] Ошибка при отправке всех сравнений {ex.Message}");
             }
         }
-
-        public void SendDataTable(Comparasign[] phoneComparisons, Message message) //отправить найденные сравнения
+        public async void SendDataTable(Comparasign[] phoneComparisons, Message message) //отправить найденные сравнения
         {
             try
             {
@@ -63,12 +66,17 @@ namespace TelegramApi
 
                 if (phoneComparisons.Length <= 1 && phoneComparisons[0].Phone1.Specs.CameraSpec != string.Empty && phoneComparisons[0].Phone2.Specs.CameraSpec != string.Empty)
                 {
-
-                    sendMessage(telegram_bot, "text", message.Chat.Id, text: text, reply: message.MessageId, buttons: comp_buttons);
+                    Interactions interaction = new Interactions();
+                    interaction.Message  = await TGAPI.telegram_bot.SendMessage(message.Chat.Id, text, parseMode: ParseMode.Html, replyMarkup: comp_buttons);
+                    interaction.PreviousFrom = $"{message.From.Id} {message.From.Username}";
+                    Program.CallbackInteractions.Add(interaction);
                 }
                 else
                 {
-                    sendMessage(telegram_bot, "text", message.Chat.Id, text: $"Найденные сравнения:", reply: message.MessageId, buttons: comp_buttons);
+                    Interactions interaction = new Interactions();
+                    interaction.Message  = await TGAPI.telegram_bot.SendMessage(message.Chat.Id, "Найденные сравнения:", parseMode: ParseMode.Html, replyMarkup: comp_buttons);
+                    interaction.PreviousFrom = $"{message.From.Id} {message.From.Username}";
+                    Program.CallbackInteractions.Add(interaction);
                 }
             }
             catch(Exception ex)
@@ -76,46 +84,53 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] ошибка при отправке ответа: {ex.Message} {ex.Data}");
             }
         }
-        public void SenAddTable(ITelegramBotClient telegram_bot, Comparasign phoneComparisons, Message message, string answer) //отправить добавленное сравнение
+        public async void SenAddTable(ITelegramBotClient telegram_bot, Comparasign phoneComparisons, Message message, string answer) //отправить добавленное сравнение
         {
             List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
             comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithUrl($"{phoneComparisons.Phone1.Manufacturer} {phoneComparisons.Phone1.Model} vs {phoneComparisons.Phone2.Manufacturer} {phoneComparisons.Phone2.Model}", $"{phoneComparisons.CompareLink}")});
             comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"Добавлено by: @{phoneComparisons.AddedBy}", $"{phoneComparisons.Phone1.Manufacturer} {phoneComparisons.Phone1.Model} vs {phoneComparisons.Phone2.Manufacturer} {phoneComparisons.Phone2.Model}")});
             var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
 
-            sendMessage(telegram_bot, "text", message.Chat.Id, text: $"<blockquote>[SUCCESS]</blockquote><b>{answer.Replace("[SUCCESS] ", "")}</b>", reply: message.MessageId, buttons: comp_buttons);
+            Interactions interaction = new Interactions();
+            interaction.Message  = await TGAPI.telegram_bot.SendMessage(message.Chat.Id, $"<blockquote>[SUCCESS]</blockquote><b>{answer.Replace("[SUCCESS] ", "")}</b>", parseMode: ParseMode.Html, replyMarkup: comp_buttons);
+            interaction.PreviousFrom = $"{message.From.Id} {message.From.Username}";
+            Program.CallbackInteractions.Add(interaction);
         }
-        public void SendMainMenu(ITelegramBotClient telegram_bot, Message message) //отправить основное меню в котором содержатся все модули
+        public async void SendMainMenu(ITelegramBotClient telegram_bot, Message message) //отправить основное меню в котором содержатся все модули
         {
             try
             {
                 List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
                 comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"Пользовательские сравнения камер смартфонов", "/comparasign")});
                 var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
-
-                sendMessage(telegram_bot, "text", message.Chat.Id, text: StartupMessage, reply: message.MessageId, buttons: comp_buttons);
+                Interactions interaction = new Interactions();
+                interaction.Message  = await TGAPI.telegram_bot.SendMessage(message.Chat.Id, StartupMessage, parseMode: ParseMode.Html, replyMarkup: comp_buttons);
+                interaction.PreviousFrom = $"{message.From.Id} {message.From.Username}";
+                Program.CallbackInteractions.Add(interaction);
             }
             catch(Exception ex)
             {
                 Console.WriteLine($"[ERROR] Не получилось отправить меню {ex.Message}");
             }
         }
-        public void SendComparasignMenu(Message message) //отправить меню сравнений
+        public async void SendComparasignMenu(Message message) //отправить меню сравнений
         {
             try
             {
                 List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
                 comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"Показать все сравнения", "comp main menu")});
                 var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
-
-                sendMessage(telegram_bot, "text", message.Chat.Id, text: ComparasignModuleMessage, reply: message.Id, buttons: comp_buttons);
+                Interactions interaction = new Interactions();
+                interaction.Message  = await TGAPI.telegram_bot.SendMessage(message.Chat.Id, ComparasignModuleMessage, parseMode: ParseMode.Html, replyMarkup: comp_buttons);
+                interaction.PreviousFrom = $"{message.From.Id} {message.From.Username}";
+                Program.CallbackInteractions.Add(interaction);
             }
             catch(Exception ex)
             {
                 Console.WriteLine($"[ERROR] Не получилось отправить меню {ex.Message}");
             }
         }
-        public void SendComparasignMenu(CallbackQuery callbackQuery) //отправить меню сравнений
+        public async void SendComparasignMenu(CallbackQuery callbackQuery) //отправить меню сравнений
         {
             try
             {
@@ -124,8 +139,10 @@ namespace TelegramApi
                     List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
                     comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"Показать все сравнения", "comp main menu")});
                     var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
-
-                    sendMessage(telegram_bot, "text", callbackQuery.Message.Chat.Id, text: ComparasignModuleMessage, reply: callbackQuery.Message.Id, buttons: comp_buttons);
+                    Interactions interaction = new Interactions();
+                    interaction.Message  = await TGAPI.telegram_bot.SendMessage(callbackQuery.Message.Chat.Id, ComparasignModuleMessage, parseMode: ParseMode.Html, replyMarkup: comp_buttons);
+                    interaction.PreviousFrom = $"{callbackQuery.From.Id} {callbackQuery.From.Username}";
+                    Program.CallbackInteractions.Add(interaction);
                 }
             }
             catch(Exception ex)
@@ -176,6 +193,8 @@ namespace TelegramApi
             }
             return (name, id);
         }
+        
+        //Делал Ефим
         public void SendUserLog(string answer, string module, Comparasign phoneComparison, Message message)
         {
             Compare compare = new Compare();
@@ -214,7 +233,7 @@ namespace TelegramApi
                 }
             }
         }
-        public void SendUserLog(string answer, string module, Comparasign phoneComparison, CallbackQuery callback)
+        public void SendUserLog(string answer, string module, Comparasign? phoneComparison, CallbackQuery callback)
         {
             Compare compare = new Compare();
 
@@ -238,6 +257,14 @@ namespace TelegramApi
                     {
                         sendMessage(telegram_bot, "text", callback.Message.Chat.Id, text: $"<blockquote>[ERROR]</blockquote><b>Неверно введено имя сравнения или телефонов! Проверьте синтаксис!</b>", reply: callback.Message.Id);
                     }
+                }
+                if(module == "not new interaction")
+                {
+                    telegram_bot.AnswerCallbackQuery(callback.Id, "Эта кнопка была отправлена старым инстансом бота. Пожалуйста вызовите меню заново для корректной работы", true);
+                }
+                if(module == "not yours interaction")
+                {
+                    telegram_bot.AnswerCallbackQuery(callback.Id, "Это меню было вызвано другим пользователем. Вызовите свое для интеракции", true);
                 }
             }
         }

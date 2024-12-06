@@ -34,6 +34,7 @@ namespace HW_picker_bot
         static MessagePool<ContextOfMsg> MsgPool = new MessagePool<ContextOfMsg>();
         static private Compare comparator = new Compare();
         static private TGAPI telegram = new TGAPI();
+        static internal List<Interactions> CallbackInteractions = new List<Interactions>();
         static void Main(string[] args)
         {
             Console.WriteLine(")                    )           (   (             )     (     \n( /( (  (         (  ( /(   *   )   )\\ ))\\ )  (    ( /(     )\\ )\n)\\()))\\))(   '  ( )\\ )\\())` )  /(  (()/(()/(  )\\   )\\())(  (()/(  \n((_)\\((_)()\\ )   )((_|(_)\\  ( )(_))  /(_))(_)|((_)|((_)\\ )\\  /(_)) \n_((_)(())\\_)() ((_)_  ((_)(_(_())  (_))(_)) )\\___|_ ((_|(_)(_))\n| || \\ \\((_)/ /  | _ )/ _ \\|_   _|  | _ \\_ _((/ __| |/ /| __| _ \\  \n| __ |\\ \\/\\/ /   | _ \\ (_) | | |    |  _/| | | (__  ' < | _||   \n|_||_| \\_/\\_/    |___/\\___/  |_|    |_| |___| \\___|_|\\_\\|___|_|_\")");
@@ -202,74 +203,123 @@ namespace HW_picker_bot
         {
             Interactions interaction = new Interactions();
             interaction.CallbackQuery = callback;
-            interaction.From = $"{callback.From.FirstName} {callback.From.LastName} {callback.From.Username}";
+            interaction.From = $"{callback.From.Id} {callback.From.Username}";
             
             if(interaction.CallbackQuery is not null && interaction.CallbackQuery.Data is not null && interaction.CallbackQuery.Message is not null)
             {
-                if(interaction.CallbackQuery.Data.Contains('['))
+                if(CallbackInteractions.Count != 0 && CanProcessCallback(interaction))
                 {
-                    Console.WriteLine($"[INFO] запрос поиска подробной информации по {interaction.CallbackQuery.Data.Trim('[')}");
-
-                    interaction.CallbackQuery.Data = interaction.CallbackQuery.Data.Trim('[');
-                    
-                    comparator.ComparasignFindAllInfo(interaction, interaction.Module[2]);
-
-                    try
+                    if(interaction.CallbackQuery.Data.Contains('['))
                     {
-                        await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
+                        Console.WriteLine($"[INFO] запрос поиска подробной информации по {interaction.CallbackQuery.Data.Trim('[')}");
+
+                        interaction.CallbackQuery.Data = interaction.CallbackQuery.Data.Trim('[');
+                        
+                        comparator.ComparasignFindAllInfo(interaction, interaction.Module[2]);
+
+                        try
+                        {
+                            await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
+                        }
+                        catch(Exception ex)
+                        {
+                            Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
+                        }
                     }
-                    catch(Exception ex)
+                    if(interaction.CallbackQuery.Data.Contains("page:"))
                     {
-                        Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
+                        interaction.CallbackQuery.Data = interaction.CallbackQuery.Data.Replace("page:", "");
+
+                        comparator.ComparasignFindAllInfo(interaction, interaction.Module[0]);
+
+                        try
+                        {
+                            await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
+                        }
+                        catch(Exception ex)
+                        {
+                            Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
+                        }
+                    }
+                    if(callback.Data == "/comparasign")
+                    {   
+                        telegram.SendComparasignMenu(interaction.CallbackQuery);
+
+                        try
+                        {
+                            await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
+                        }
+                        catch(Exception ex)
+                        {
+                            Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
+                        }
+                    }
+                    if(callback.Data == "comp main menu")
+                    {    
+                        interaction.CallbackQuery.Data = "1";
+                        comparator.ComparasignFindAllInfo(interaction, interaction.Module[0]);
+
+                        try
+                        {
+                            await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
+                        }
+                        catch(Exception ex)
+                        {
+                            Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
+                        }
                     }
                 }
-                if(interaction.CallbackQuery.Data.Contains("page:"))
+                else
                 {
-                    interaction.CallbackQuery.Data = interaction.CallbackQuery.Data.Replace("page:", "");
-
-                    comparator.ComparasignFindAllInfo(interaction, interaction.Module[0]);
-
-                    try
-                    {
-                        await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
-                    }
-                    catch(Exception ex)
-                    {
-                        Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
-                    }
-                }
-                if(callback.Data == "/comparasign")
-                {   
-                    telegram.SendComparasignMenu(interaction.CallbackQuery);
-
-                    try
-                    {
-                        await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
-                    }
-                    catch(Exception ex)
-                    {
-                        Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
-                    }
-                }
-                if(callback.Data == "comp main menu")
-                {    
-                    interaction.CallbackQuery.Data = "1";
-                    comparator.ComparasignFindAllInfo(interaction, interaction.Module[0]);
-
-                    try
-                    {
-                        await telegram_bot.AnswerCallbackQuery(callbackQueryId: callback.Id);
-                    }
-                    catch(Exception ex)
-                    {
-                        Console.WriteLine($"[ERROR] не получилось ответить на Callback от {callback.From} {ex.Message}");
-                    }
+                    telegram.SendUserLog("not new interaction", "not new interaction", null, interaction.CallbackQuery);
                 }
             }
         }
 
-    }
+        static bool CanProcessCallback(Interactions interaction)
+        {
+            if(CallbackInteractions.Count != 0)
+            {
+                int i = 0;
+                int j = 0;
+                foreach(Interactions PreviousInteration in CallbackInteractions)
+                {
+                    if(PreviousInteration.Message.Id != interaction.CallbackQuery.Message.Id)
+                    {
 
+                    }
+                    if(PreviousInteration.Message.Id == interaction.CallbackQuery.Message.Id)
+                    {
+                        if(PreviousInteration.PreviousFrom == interaction.From)
+                        {
+                            i++;
+                            j++;
+                        }
+                        if(PreviousInteration.PreviousFrom != interaction.From)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                if(i == 0 && j != 0)
+                {
+                    telegram.SendUserLog("not new interaction", "not new interaction", null, interaction.CallbackQuery);
+                    return false;
+                }
+                if(i == 0 && j == 0)
+                {
+                    telegram.SendUserLog("not yours interaction", "not new interaction", null, interaction.CallbackQuery);
+                    return false;
+                }
+                if(i != 0 && j != 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    
+    }
     class ContextOfMsg
     {
         static public int[] rate = new int[5];
