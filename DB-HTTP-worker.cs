@@ -28,7 +28,7 @@ namespace HardWarePickerBot
             try
             {
                 HttpClient client = new HttpClient();
-                var url = $"{DBBaseURL}/Comparasign/Get/All/{page}";
+                var url = $"{DBBaseURL}/Comparasign/Get/All/{page}/5";
                 var msg = new HttpRequestMessage(HttpMethod.Get, url);
                 var res = await client.SendAsync(msg);
                 var content = await res.Content.ReadAsStringAsync();
@@ -175,7 +175,7 @@ namespace HardWarePickerBot
                 var res = await client.PutAsync(url, request);
                 var content = await res.Content.ReadAsStringAsync();
 
-                if(res.StatusCode == HttpStatusCode.OK)
+                if(res.StatusCode == HttpStatusCode.Created)
                 {
                     Console.WriteLine($"[INFO] получен ответ от слоя БД: {res.StatusCode} {content}");
                     client.Dispose();

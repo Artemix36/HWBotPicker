@@ -39,15 +39,15 @@ namespace HWpicker_bot
         TGAPI tg = new TGAPI();
         SpecWriter_HTTP specWriter_HTTP = new SpecWriter_HTTP();
 
-        public void ComparasignFindAllInfo(Interactions interaction, string module) //получение подробной информации о сравнении по кнопке из меню
-        {
-            MessageSending messageSending = new MessageSending();
-            if(interaction.Message is not null)
+        public void ComparasignFindAllInfo(Interactions interaction, string module) //получение подробной информации о сравнении
+        {   
+            if(interaction.Message is not null) //Если пришли с сообщением
             {
+                MessageSending messageSending = new MessageSending();
                 if (module == "one_comp" || module == "all_by_one_comp")
                 {
-                    Comparasign[] NeededComparasign = FindComaparsign(interaction.Message.Text).Result;
-                    if (NeededComparasign[0] is null)
+                    Comparasign[] NeededComparasign = FindExactComaparsign(interaction.Message.Text).Result;
+                    if (NeededComparasign is null || NeededComparasign[0] is null)
                     {
                         tg.SendUserLog("[ERROR] Сравнения не найдены", "read_comp", NeededComparasign[0], interaction.Message);
                         return;
@@ -71,13 +71,12 @@ namespace HWpicker_bot
                 }
             }
 
-            if (interaction.CallbackQuery is not null)
+            if (interaction.CallbackQuery is not null) //Если пришли по кнопке
             {
                 CallBackEditing callBackEditing = new CallBackEditing();
                 if (module == "one_comp" || module == "all_by_one_comp") 
                 {
-                    Comparasign[] NeededComparasign = FindComaparsign(interaction.CallbackQuery.Data).Result;
-
+                    Comparasign[] NeededComparasign = FindExactComaparsign(interaction.CallbackQuery.Data).Result;
                     if (NeededComparasign[0] is null)
                     {
                         tg.SendUserLog("[ERROR] Сравнения не найдены", "read_comp", NeededComparasign[0], interaction.CallbackQuery);
@@ -103,7 +102,8 @@ namespace HWpicker_bot
                 }
             }
         }
-        public void comparasing_photo_write(ITelegramBotClient telegram_bot, Message? message) //добавление сравнения
+
+        public void AddNewComparasign(ITelegramBotClient telegram_bot, Message? message) //добавление сравнения
         {
             Comparasign newComparasign = new Comparasign();
 
@@ -113,7 +113,7 @@ namespace HWpicker_bot
                 string link = checker.GetLink(message.Text);
                 (newComparasign.Phone1.Manufacturer, newComparasign.Phone1.Model, newComparasign.Phone2.Manufacturer, newComparasign.Phone2.Model) = checker.GetAddComparasignName(message.Text);
 
-                if (newComparasign.Phone1.Manufacturer != null && newComparasign.Phone2.Manufacturer != null && message.From.Username.Length <= 30)
+                if (newComparasign.Phone1.Manufacturer != string.Empty && newComparasign.Phone2.Manufacturer != string.Empty && message.From.Username.Length <= 30)
                 {
                     newComparasign.CompareLink = link;
                     newComparasign.AddedBy = $"{message.From.Username}";
@@ -148,12 +148,12 @@ namespace HWpicker_bot
             }
             return new Comparasign[0];
         }
-        public async Task<Comparasign[]> FindComaparsign(string Text) //Оркестратор поиска сравнений по одному или двумя именам
+
+        public async Task<Comparasign[]> FindExactComaparsign(string Text) //Оркестратор поиска сравнений по одному или двумя именам
         {
             if(Text != null)
             {
                 (string name1, string name2) = checker.ParseRequestName(Text);
-
                 if(name1 != string.Empty && name2 == string.Empty)
                 {
                     return await RequestComparasign(name1);
@@ -166,7 +166,7 @@ namespace HWpicker_bot
             }
             return new Comparasign[1];
         }
-        public async Task<Comparasign[]?> RequestComparasign(string name) //Запрос сравнения по одном имени в БД + Хар-К в БД или GsmArenaBot
+        public async Task<Comparasign[]> RequestComparasign(string name) //Запрос сравнения по одном имени в БД + Хар-К в БД или GsmArenaBot
         {
                 Comparasign RequestComparasign = new Comparasign();
                 (RequestComparasign.Phone1.Manufacturer, RequestComparasign.Phone1.Model) = checker.GetManufacturerAndModel(name);

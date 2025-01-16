@@ -35,14 +35,16 @@ namespace TelegramApi
                 {
                     Answer answer = new Answer();
                     string text = answer.OneCompMessage(phoneComparisons);
-
-                    await TGAPI.telegram_bot.SendMessage(Message.Chat.Id, text, parseMode: ParseMode.Html, replyMarkup: comp_buttons);
+                    Interactions interaction = new Interactions();
+                    interaction.Message = await TGAPI.telegram_bot.SendMessage(Message.Chat.Id, text, parseMode: ParseMode.Html, replyMarkup: comp_buttons);
+                    interaction.PreviousFrom = $"{Message.From.Id} {Message.From.Username}";
+                    Program.CallbackInteractions.Add(interaction);
                 }
                 else
                 {
                     Interactions interaction = new Interactions();
                     interaction.Message  = await TGAPI.telegram_bot.SendMessage(Message.Chat.Id, "Найденные сравнения:", parseMode: ParseMode.Html, replyMarkup: comp_buttons);
-                    interaction.PreviousFrom = $"{Message.From.FirstName} {Message.From.LastName} {Message.From.Username}";
+                    interaction.PreviousFrom = $"{Message.From.Id} {Message.From.Username}";
                     Program.CallbackInteractions.Add(interaction);
                 }
             }
@@ -51,7 +53,6 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] ошибка при отправке ответа: {ex.Message} {ex.Data}");
             }
         }
-
         public async void AllComparasignsByOnePhoneCallback(Comparasign[] phoneComparisons, Message Message) //Показать все сравнения по телефону
         {
             try
@@ -67,14 +68,14 @@ namespace TelegramApi
 
                     Interactions interaction = new Interactions();
                     interaction.Message  = await TGAPI.telegram_bot.SendMessage(Message.Chat.Id, text, parseMode: ParseMode.Html, replyMarkup: comp_buttons);
-                    interaction.PreviousFrom = $"{Message.From.FirstName} {Message.From.LastName} {Message.From.Username}";
+                    interaction.PreviousFrom = $"{Message.From.Id} {Message.From.Username}";
                     Program.CallbackInteractions.Add(interaction);
                 }
                 else
                 {
                     Interactions interaction = new Interactions();
                     interaction.Message  = await TGAPI.telegram_bot.SendMessage(Message.Chat.Id, "Найденные сравнения:", parseMode: ParseMode.Html, replyMarkup: comp_buttons);
-                    interaction.PreviousFrom = $"{Message.From.FirstName} {Message.From.LastName} {Message.From.Username}";
+                    interaction.PreviousFrom = $"{Message.From.Id} {Message.From.Username}";
                     Program.CallbackInteractions.Add(interaction);
                 }
             }

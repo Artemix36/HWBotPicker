@@ -88,7 +88,7 @@ namespace TelegramApi
         {
             List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
             comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithUrl($"{phoneComparisons.Phone1.Manufacturer} {phoneComparisons.Phone1.Model} vs {phoneComparisons.Phone2.Manufacturer} {phoneComparisons.Phone2.Model}", $"{phoneComparisons.CompareLink}")});
-            comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"Добавлено by: @{phoneComparisons.AddedBy}", $"{phoneComparisons.Phone1.Manufacturer} {phoneComparisons.Phone1.Model} vs {phoneComparisons.Phone2.Manufacturer} {phoneComparisons.Phone2.Model}")});
+            comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData($"By: @{phoneComparisons.AddedBy}",  $"[{phoneComparisons.Phone1.Manufacturer} {phoneComparisons.Phone1.Model} vs {phoneComparisons.Phone2.Manufacturer} {phoneComparisons.Phone2.Model}")});
             var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
 
             Interactions interaction = new Interactions();
@@ -150,7 +150,24 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] Не получилось отправить меню {ex.Message}");
             }
         }
-        
+        public async void SendInfoByIMEI(string data, long IMEI, Message message)
+        {
+            try
+            {
+                List<List<InlineKeyboardButton>> comp_array = new List<List<InlineKeyboardButton>>();
+                comp_array.Add(new List<InlineKeyboardButton> { InlineKeyboardButton.WithUrl($"Проверить твой Pixel", $"https://store.google.com/us/device-authenticity?id={IMEI}")});
+                var comp_buttons = new InlineKeyboardMarkup(comp_array.Select(a => a.ToArray()).ToArray());
+                Interactions interaction = new Interactions();
+                interaction.Message  = await TGAPI.telegram_bot.SendMessage(message.Chat.Id, data, parseMode: ParseMode.Markdown, replyMarkup: comp_buttons);
+                interaction.PreviousFrom = $"{message.From.Id} {message.From.Username}";
+                Program.CallbackInteractions.Add(interaction);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Не получилось отправить информацию об imei {ex.Message}");
+            }
+        }
+
        //Делал Адам
         public async void sendMessage(ITelegramBotClient bot, string type, long peer_id, int? reply = null, string? text = null, string? photo = null, string? document = null, InlineKeyboardMarkup? buttons = null)
         {

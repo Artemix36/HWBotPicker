@@ -53,7 +53,6 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] ошибка при изменении ответа: {ex.Message} {ex.Data}");
             }
         }
-
         public async void AllComparasignsByOnePhoneCallback(Comparasign[] phoneComparisons, CallbackQuery callbackQuery) //Показать все сравнения по телефону
         {
             try
@@ -84,8 +83,7 @@ namespace TelegramApi
                 Console.WriteLine($"[ERROR] ошибка при изменении ответа: {ex.Message} {ex.Data}");
             }
         }
-
-        public async void ChangePageForComparasigns(Comparasign[] phoneComparisons, CallbackQuery callbackQuery) 
+        public async void ChangePageForComparasigns(Comparasign[] phoneComparisons, CallbackQuery callbackQuery) //Смена страниц главного меню
         {
             try
             {

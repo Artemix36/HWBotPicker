@@ -15,7 +15,7 @@ namespace HW_picker_bot
 
         public abstract List<List<InlineKeyboardButton>> CreateOneCompButtons(Comparasign[] phoneComparisons);
 
-        public abstract List<List<InlineKeyboardButton>> CrateComparasignsAllInfo(Comparasign[] phoneComparisons);
+        public abstract List<List<InlineKeyboardButton>> CreateComparasignsAllInfo(Comparasign[] phoneComparisons);
     }
     class ComparasignPagesButtons: InlineKeyBoardBuilder
     {
@@ -25,7 +25,7 @@ namespace HW_picker_bot
             {
                 List<InlineKeyboardButton> row = new List<InlineKeyboardButton>();
                     row.Add(InlineKeyboardButton.WithUrl($"{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}", $"{phoneComparisons[i].CompareLink}"));
-                    row.Add(InlineKeyboardButton.WithCallbackData($"Добавлено by: @{phoneComparisons[i].AddedBy}", $"[{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}"));
+                    row.Add(InlineKeyboardButton.WithCallbackData($"By: @{phoneComparisons[i].AddedBy}", $"[{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}"));
                 this.ComparasignButtons.Add(row);
             }
 
@@ -67,13 +67,13 @@ namespace HW_picker_bot
             return this.ComparasignButtons;
         }
 
-        public override List<List<InlineKeyboardButton>> CrateComparasignsAllInfo(Comparasign[] phoneComparisons)
+        public override List<List<InlineKeyboardButton>> CreateComparasignsAllInfo(Comparasign[] phoneComparisons)
         {
             for (int i = 0; i <= phoneComparisons.Length - 1; i++)
             {
                 List<InlineKeyboardButton> row = new List<InlineKeyboardButton>();
                 row.Add(InlineKeyboardButton.WithUrl($"{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}", $"{phoneComparisons[i].CompareLink}"));
-                row.Add(InlineKeyboardButton.WithCallbackData($"Добавлено by: @{phoneComparisons[i].AddedBy}", $"[{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}"));
+                row.Add(InlineKeyboardButton.WithCallbackData($"By: @{phoneComparisons[i].AddedBy}", $"[{phoneComparisons[i].Phone1.Manufacturer} {phoneComparisons[i].Phone1.Model} vs {phoneComparisons[i].Phone2.Manufacturer} {phoneComparisons[i].Phone2.Model}"));
                 this.ComparasignButtons.Add(row);
             }
             return this.ComparasignButtons;

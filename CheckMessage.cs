@@ -16,7 +16,7 @@ namespace HardWarePickerBot
 {
     public class CheckMessage
     {
-        static public string[] startWords = { "pixel", "iphone", "huawei", "vivo", "xiaomi", "oppo", "oppo find" , "oneplus", "samsung", "nothing", "samsung galaxy", "samsung galaxy note"};
+        static public string[] startWords = { "pixel", "iphone", "huawei", "vivo", "xiaomi", "oppo", "oneplus", "samsung", "nothing", "samsung galaxy", "samsung galaxy note"};
         public string FixPhoneNameToUpper(string name)//Исправление написания регистра имени телефона
         {
             string[] words = name.Split(' ');
@@ -84,12 +84,12 @@ namespace HardWarePickerBot
                     string name1 = CompareLevDistance(MatchEasy.Groups[2].Value.Trim(' ')).Trim(' ');
                     string name2 = CompareLevDistance(MatchEasy.Groups[3].Value.Trim(' ')).Trim(' ');
                     
-                    string pattern = $@"^({string.Join("|", startWords)})\s((?:[a-zA-Z]?\d{{1,2}})(?:\s?[a-zA-Z\s]{{0,7}}))?$";
+                    string pattern = $@"^({string.Join("|", startWords)})\s((?:[a-zA-Z]?\d{{1,2}})(?:\s?[a-zA-Z\s]{{0,13}}))?$";
                     Regex regex = new Regex(pattern);
-                    Match Name1Match = regex.Match(name1.ToLower());
-                    Match Name2Match = regex.Match(name2.ToLower());
+                    Match Name1Match = regex.Match(name1);
+                    Match Name2Match = regex.Match(name2);
 
-                    if (regex.IsMatch(name1.ToLower()) && regex.IsMatch(name2.ToLower()))
+                    if (regex.IsMatch(name1) && regex.IsMatch(name2))
                     {
                         return (FixPhoneNameToUpper(Name1Match.Groups[1].Value.Trim(' ')), FixPhoneNameToUpper(Name1Match.Groups[2].Value.Trim(' ')), FixPhoneNameToUpper(Name2Match.Groups[1].Value.Trim(' ')), FixPhoneNameToUpper(Name2Match.Groups[2].Value.Trim(' ')));
                     }
@@ -126,30 +126,38 @@ namespace HardWarePickerBot
         public (string, string) ParseRequestName(string text)//Найти два или одно полное имя телефона
         {
             string ProcessedText = text.ToLower().Replace("покажи сравнение ","");
+            ProcessedText = ProcessedText.ToLower().Replace("покажи сравнения ","");
+
             if(ProcessedText.Contains("vs"))
             {
+                Console.WriteLine("[INFO] поиск двух имён");
                 string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
                 Regex regex = new Regex(pattern);
                 string[] words = ProcessedText.Split(" vs ");
                 if(regex.IsMatch(words[0].Trim(' ')) && regex.IsMatch(words[1].Trim(' ')))
                 {
+                    Console.WriteLine($"[INFO] найдено {words[0]} {words[1]}");
                     return (words[0], words[1]);
                 }
                 else
                 {
+                    Console.WriteLine($"[ERROR] не найдено имя");
                     return (string.Empty, string.Empty);
                 }
             }
             if(!ProcessedText.Contains("vs"))
             {
+                Console.WriteLine("[INFO] поиск одного имени");
                 string pattern = $@"^({string.Join("|", startWords)})(\s([a-zA-Z]?\d{{1,2}})(\s?[a-zA-Z\s]{{0,7}}))?$";
                 Regex regex = new Regex(pattern);
                 if(regex.IsMatch(ProcessedText.Trim(' ')))
                 {
+                    Console.WriteLine($"[INFO] найдено {ProcessedText}");
                     return (ProcessedText, string.Empty);
                 }
                 else
                 {
+                    Console.WriteLine($"[ERROR] не найдено имя");
                     return (string.Empty, string.Empty);
                 }
             }
@@ -169,7 +177,26 @@ namespace HardWarePickerBot
                 return "error";
             }
         }
-        
+        public long GetIMEI(string msg)//Получение IMEI
+        {
+            msg = msg.Replace("/imei", "");
+            char[] chars = msg.ToCharArray();
+            string IMEI = string.Empty;
+            long ParsedIMEI = 0;
+            foreach(char c in chars)
+            {
+                if(c != ' ')
+                {
+                    IMEI = IMEI + c;
+                }
+            }
+            long.TryParse(IMEI, out ParsedIMEI);
+            if(ParsedIMEI.ToString().ToCharArray().Length < 15 && ParsedIMEI.ToString().ToCharArray().Length >= 15)
+            {
+                return 0;
+            }
+            return ParsedIMEI;
+        }
         
         //Секция с отзывами на телефоны пока что не переработана #TO BE DONE
         public string GetReviewName(string msg) //получение имени отзыва

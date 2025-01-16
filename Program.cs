@@ -1,36 +1,17 @@
 ﻿using HWpicker_bot;
 using TelegramApi;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Net.Mail;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using Telegram.Bot;
-using Telegram.Bot.Exceptions;
-using Telegram.Bot.Requests;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.ReplyMarkups;
-using static System.Net.Mime.MediaTypeNames;
 using HardWarePickerBot;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Polling;
-using System.Runtime.CompilerServices;
 using YAMLvarsReader;
-using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
 
 namespace HW_picker_bot
 {
     class Program
     {
         static int[] rate = new int[5];
-        static Message? messageForCallback = null;
         static MessagePool<ContextOfMsg> MsgPool = new MessagePool<ContextOfMsg>();
         static private Compare comparator = new Compare();
         static private TGAPI telegram = new TGAPI();
@@ -134,6 +115,7 @@ namespace HW_picker_bot
         async static Task ParseMessage(ITelegramBotClient telegram_bot, Message message, Update update)
         {
             Interactions interaction = new Interactions();
+            CheckMessage checker = new CheckMessage();
             interaction.Message = message;
             if(message.Text is not null && message.From is not null)
             {
@@ -178,7 +160,7 @@ namespace HW_picker_bot
                 if (receivedText.Contains("добавить ссылку") || receivedText.Contains("добавь ссылку") || receivedText.Contains("добавить сравнение") || receivedText.Contains("добавь сравнение"))
                 {
                     Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
-                    comparator.comparasing_photo_write(telegram_bot, message);
+                    comparator.AddNewComparasign(telegram_bot, message);
                     return;
                 }
 
@@ -196,6 +178,32 @@ namespace HW_picker_bot
                     return;
                 }
 
+                if(receivedText.Contains("/imei ") && receivedText != "/imei" && receivedText != "/imei ")
+                {
+                    Console.WriteLine("[INFO] запрос на получения информации о Pixel по IMEI");
+                    SpecWriter_HTTP specWriter = new SpecWriter_HTTP();
+                    long IMEI = checker.GetIMEI(receivedText);
+                    if(IMEI != 0)
+                    {
+                        string info = await specWriter.GetInfoByIMEI(IMEI);
+                        if(info != string.Empty && info != "Неверный IMEI")
+                        {
+                            telegram.SendInfoByIMEI(info, IMEI , message);
+                        }
+                        if(info == "Неверный IMEI")
+                        {
+                            telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: info);
+                        }
+                        if(info == string.Empty)
+                        {
+                            telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "При обработке запроса произошла ошибка, пожалуйста, повторите операцию");
+                        }
+                    }
+                    else
+                    {
+                        telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "Проверьте правильность введенного IMEI");
+                    }
+                }
             }
         }
         

@@ -25,22 +25,22 @@ namespace HardWarePickerBot
             client.Timeout = timeout;
             try
             {
-                    var msg1 = new HttpRequestMessage(HttpMethod.Get, GSMarenaBotUrl);
-                    msg1.Headers.Add("Authorization", GSMarenaBotToken);
-                    msg1.Headers.Add("SPEC-QUERY", name1);
-                    msg1.Headers.Add("SPEC-TYPE", "cameras");
-                    var res = await client.SendAsync(msg1);
-                    var content1 = await res.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[INFO] Получен ответ от GsmArenaBot: {cleanupSpec(content1.Replace("\n", ""))}");
-                    string specs1 = cleanupSpec(content1.Replace("\n", ""));
-                    client.Dispose();
-                    return specs1;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[ERROR] ошибка при запросе в GsmArenaBot {ex.Message} | {ex.StackTrace}");
-                    return string.Empty;
-                }
+                var msg1 = new HttpRequestMessage(HttpMethod.Get, GSMarenaBotUrl);
+                msg1.Headers.Add("Authorization", GSMarenaBotToken);
+                msg1.Headers.Add("SPEC-QUERY", name1);
+                msg1.Headers.Add("SPEC-TYPE", "cameras");
+                var res = await client.SendAsync(msg1);
+                var content1 = await res.Content.ReadAsStringAsync();
+                Console.WriteLine($"[INFO] Получен ответ от GsmArenaBot: {cleanupSpec(content1.Replace("\n", ""))}");
+                string specs1 = cleanupSpec(content1.Replace("\n", ""));
+                client.Dispose();
+                return specs1;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] ошибка при запросе в GsmArenaBot {ex.Message} | {ex.StackTrace}");
+                return string.Empty;
+            }
         }
         public async Task<Phone> GetCameraSpec(Phone phone)//Получение харак-к камер для телефона
         {
@@ -48,7 +48,7 @@ namespace HardWarePickerBot
             {
                 DB_HTTP_worker db = new DB_HTTP_worker();
                 phone = await db.GetCameraSpec(phone);
-                if(phone.Specs.CameraSpec != "Not Found")
+                if(phone.Specs.CameraSpec != "Not Found" && phone.Specs.CameraSpec != "Не добавлено" && phone.Specs.CameraSpec != string.Empty)  
                 {
                     Console.WriteLine($"[INFO] Найдены хар-ки камер для {phone.Manufacturer} {phone.Model} в базе данных {phone.Specs.CameraSpec}. Результат записан в объект.");
                     return phone;
@@ -78,6 +78,27 @@ namespace HardWarePickerBot
             {
                 Console.WriteLine($"[ERROR] ошибка при очистке сообщения от GsmArenaBot {ex.Message}");
                 return content1;
+            }
+        }
+        public async Task<string> GetInfoByIMEI(long IMEI)
+        {
+            HttpClient client = new HttpClient();
+            client.Timeout = new TimeSpan(0, 0, 50);
+            try
+            {
+                var msg1 = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:5129/api/Pixel/IMEIcheck/{IMEI}");
+                var res = await client.SendAsync(msg1);
+                var content1 = await res.Content.ReadAsStringAsync();
+                Console.WriteLine($"[INFO] Получен ответ от Scraper'а: {content1}");
+                content1 = content1.Replace("\"", "");
+                content1 = content1.Replace("\\n", "\n");
+                client.Dispose();
+                return content1;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] ошибка при запросе в Scraper {ex.Message} | {ex.StackTrace}");
+                return string.Empty;
             }
         }
     }
