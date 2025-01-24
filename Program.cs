@@ -14,7 +14,6 @@ namespace HW_picker_bot
     {
         static int[] rate = new int[5];
         static ILogger logger;
-        static MessagePool<ContextOfMsg> MsgPool = new MessagePool<ContextOfMsg>();
         static private Compare comparator = new Compare();
         static private TGAPI telegram = new TGAPI();
         static internal List<Interactions> CallbackInteractions = new List<Interactions>();
@@ -87,7 +86,6 @@ namespace HW_picker_bot
                 return Task.CompletedTask;
             }
         }
-
         private static void Handle_errors(ITelegramBotClient telegram_bot, Exception exception, CancellationToken token)
         {
             string ErrorMessage = exception.ToString();
@@ -218,7 +216,6 @@ namespace HW_picker_bot
                 }
             }
         }
-        
         async static Task ParseCallback(ITelegramBotClient telegram_bot, Update update, CallbackQuery callback)
         {
             Interactions interaction = new Interactions();
@@ -295,7 +292,6 @@ namespace HW_picker_bot
                 }
             }
         }
-
         static bool CanProcessCallback(Interactions interaction)
         {
             if(CallbackInteractions.Count != 0)
@@ -306,7 +302,7 @@ namespace HW_picker_bot
                 {
                     if(PreviousInteration.Message.Id != interaction.CallbackQuery.Message.Id)
                     {
-                        
+                        logger.LogDebug("Someone tried to use old interation");
                     }
                     if(PreviousInteration.Message.Id == interaction.CallbackQuery.Message.Id)
                     {
@@ -340,113 +336,5 @@ namespace HW_picker_bot
         }
     
     }
-    class ContextOfMsg
-    {
-        static public int[] rate = new int[5];
-        static public int counter { get; set; }
-        static public Message messageForCallback {  get; set; } = new Message();
-        static public Update update {  get; set; } = new Update();
 
-        static ContextOfMsg Obj = new ContextOfMsg();
-
-        public bool isCallBackFromSameGuy(Update update2)
-        {
-            if(update is not null && update.Message is not null && update2 is not null && update2.CallbackQuery is not null && update.Message.From is not null){
-                var msg = update.Message.From;
-                var msg2 = update2.CallbackQuery.From;
-                TGAPI tg = new TGAPI();
-
-                if (tg.getCallbackName(msg).Item2 == tg.getCallbackName(msg2).Item2)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public void SetValues(int count, Update updated, Message Message)
-        {
-            ContextOfMsg.counter = count;
-            ContextOfMsg.update = updated;
-            var msg = update.Message;
-            ContextOfMsg.messageForCallback = Message;
-        }
-        public void ParseCallback(ITelegramBotClient telegram_bot, Update update)
-        {
-            Program progr = new Program();
-            //Phone_Menu pm = new Phone_Menu();
-            string[] buttons = new string[] { "Общая оценка", "Система", "Камера", "Батарея", "Экран" };
-            var callback = update.CallbackQuery;
-            if(callback is not null && callback.Data is not null)
-            {
-                string data = callback.Data.ToString();
-
-                for (int i = 0; i < 5; i++)
-                {
-                    if (data.Contains(buttons[i]))
-                    {
-                        data = data.Replace(buttons[i] + ":", "");
-                        int.TryParse(data, out rate[i]);
-                        counter++;
-                    }
-                }
-
-                if (counter == 5)
-                {
-                    counter = 0;
-                    //pm.PhoneReview(telegram_bot, rate, messageForCallback, update);
-                    messageForCallback = new Message();
-                }
-                else
-                {
-                    telegram_bot.SendMessage(update.Id, "Потерян контекст или кто то нажал кнопки за вас");
-                }
-            }
-        }
-
-    }
-
-    public class MessagePool<T> where T: new()
-    {
-        private List<T> Messagelist = new List<T>();
-        private int ObjCounter = 0;
-        private int MaxObjects = 10;
-
-        public int getCount()
-        {
-            return ObjCounter;
-        }
-
-        public T getObj(Update update2)
-        {
-            T MessageObj;
-            if (ObjCounter > 0)
-            {
-                MessageObj = Messagelist[0];
-                ObjCounter --;
-                return MessageObj;
-            }
-            else
-            {
-                T obj = new T();
-                return obj;
-            }
-        }
-        public void releaseObj(T item)
-        {
-            if (ObjCounter < MaxObjects)
-            {
-                Messagelist.Add(item);
-                ObjCounter++;
-            }
-        }
-
-    }
 }
