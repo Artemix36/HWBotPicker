@@ -19,8 +19,8 @@ namespace YAMLvarsReader
         public BotVars ReadVars()
         {   
             BotVars vars = new BotVars();
-            string path = $"{System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/var.yaml";
-            Console.WriteLine("[INF] Reading vars from var.yaml");
+            string path = "var.yaml";
+            Console.WriteLine($"[INF] Reading vars from var.yaml@{path}");
             try
             {
                 string readedFile = System.IO.File.ReadAllText(path);

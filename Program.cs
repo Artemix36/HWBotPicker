@@ -4,6 +4,7 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using HardWarePickerBot;
 using Telegram.Bot.Types.Enums;
+using Microsoft.Extensions.Logging;
 using Telegram.Bot.Polling;
 using YAMLvarsReader;
 
@@ -12,6 +13,7 @@ namespace HW_picker_bot
     class Program
     {
         static int[] rate = new int[5];
+        static ILogger logger;
         static MessagePool<ContextOfMsg> MsgPool = new MessagePool<ContextOfMsg>();
         static private Compare comparator = new Compare();
         static private TGAPI telegram = new TGAPI();
@@ -21,13 +23,27 @@ namespace HW_picker_bot
             Console.WriteLine(")                    )           (   (             )     (     \n( /( (  (         (  ( /(   *   )   )\\ ))\\ )  (    ( /(     )\\ )\n)\\()))\\))(   '  ( )\\ )\\())` )  /(  (()/(()/(  )\\   )\\())(  (()/(  \n((_)\\((_)()\\ )   )((_|(_)\\  ( )(_))  /(_))(_)|((_)|((_)\\ )\\  /(_)) \n_((_)(())\\_)() ((_)_  ((_)(_(_())  (_))(_)) )\\___|_ ((_|(_)(_))\n| || \\ \\((_)/ /  | _ )/ _ \\|_   _|  | _ \\_ _((/ __| |/ /| __| _ \\  \n| __ |\\ \\/\\/ /   | _ \\ (_) | | |    |  _/| | | (__  ' < | _||   \n|_||_| \\_/\\_/    |___/\\___/  |_|    |_| |___| \\___|_|\\_\\|___|_|_\")");
             Thread ConfListening = new Thread(async () => await ConfigureListener());
             ConfListening.Start();
-            Console.Read();
+            while(true)
+            {
+                Thread.Sleep(50000);
+            }
         }
 
         static Task ConfigureListener() //поток прослушивания сообщения
         {
-            Console.WriteLine($"[INF] {Thread.CurrentThread.ThreadState}: New thread started. Starting bot");   
-            string path = $"{System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}/var.txt";
+            using ILoggerFactory loggerFactory = LoggerFactory.Create(builder => 
+            {
+                builder.ClearProviders();
+                builder.AddSimpleConsole(options =>
+                    {
+                        options.IncludeScopes = true;
+                        options.SingleLine = true;
+                        options.TimestampFormat = "HH:mm:ss ";
+                    });
+                builder.AddFilter("System", LogLevel.Debug).SetMinimumLevel(LogLevel.Information);
+            });
+            logger = loggerFactory.CreateLogger("Program");
+            logger.LogInformation($"Configuration started. Starting bot");   
             BotVars botVars = new BotVars();
             YamlReader reader = new YamlReader();
             botVars = reader.ReadVars();
@@ -55,7 +71,7 @@ namespace HW_picker_bot
                     Program Program = new Program();
                     
                     telegram_bot.StartReceiving(OnUpdate, Handle_errors, receiverOptions);
-                    Console.WriteLine($"[INF] SUCCESS. Bot got token and DB base url {DB_HTTP_worker.DBBaseURL} and started listening");
+                    logger.LogInformation($"Bot got token and DB base url: {DB_HTTP_worker.DBBaseURL}, bot started listening");
                     return Task.CompletedTask;
                 }
                 if(botVars.TGtoken == "not found" || botVars.DBBaseURL is null)
@@ -67,7 +83,7 @@ namespace HW_picker_bot
             }
             catch(Exception e)
             {
-                Console.WriteLine(e.ToString());
+                logger.LogCritical(e.ToString());
                 return Task.CompletedTask;
             }
         }
@@ -88,7 +104,7 @@ namespace HW_picker_bot
                     if (update.Type == UpdateType.CallbackQuery && update.CallbackQuery is not null)
                     {
                         var callback = update.CallbackQuery;
-                        Console.WriteLine($"[CLBCK UPDATE] {update.CallbackQuery.From.FirstName} | {update.CallbackQuery.From.Id}");
+                        logger.LogInformation($"[CLBCK UPDATE] {update.CallbackQuery.From.FirstName} | {update.CallbackQuery.From.Id}");
                         Thread CheckNewCallback= new Thread(async () => await ParseCallback(telegram_bot, update, callback));
                         CheckNewCallback.Start();
                         return;
@@ -97,7 +113,7 @@ namespace HW_picker_bot
                     {
                         var message = update.Message;
                         if (message.Text == null) return;
-                        Console.WriteLine($"[MSG UPDATE] {telegram.getName(message).Item1} | {telegram.getName(message).Item2}");
+                        logger.LogInformation($"[MSG UPDATE] {telegram.getName(message).Item1} | {telegram.getName(message).Item2}");
 
                         Thread CheckNewMessage = new Thread(async () => await ParseMessage(telegram_bot, message, update));
                         CheckNewMessage.Start();
@@ -124,63 +140,60 @@ namespace HW_picker_bot
 
                 if(receivedText == "/start" || receivedText == "/start@hw_picker_bot")
                 {
-                    Console.WriteLine($"[INFO] Запрошено главное меню через {receivedText}");
+                    logger.LogInformation($"Запрошено главное меню через {receivedText}");
                     telegram.SendMainMenu(telegram_bot, message);
                     return;
                 }
 
                 if(receivedText == "/comparasign" || receivedText == "/comparasign@hw_picker_bot")
                 {
-                    Console.WriteLine($"[INFO] Запрошено меню сравнения через {receivedText}");
+                    logger.LogInformation($"Запрошено меню сравнения через {receivedText}");
                     telegram.SendComparasignMenu(message);
                     return;
                 }
 
                 if (receivedText.Contains("миронов"))
                 {
-                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
                     telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "@ReversFlash25 купи 12су за 45к и в доставку!");
                     return;
                 }
 
                 if (receivedText.Contains("фролов"))
                 {
-                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
                     telegram.sendMessage(telegram_bot, "document", message.Chat.Id, document: "https://tenor.com/qX1eCt0OjDO.gif");
                     return;
                 }
 
                 if (receivedText.Contains("остановить работу сейчас же"))
                 {
-                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
                     telegram.sendMessage(telegram_bot, "text", message.Chat.Id, text: "Вырубаюсь");
                     return;
                 }
 
                 if (receivedText.Contains("добавить ссылку") || receivedText.Contains("добавь ссылку") || receivedText.Contains("добавить сравнение") || receivedText.Contains("добавь сравнение"))
                 {
-                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
+                    logger.LogInformation($"Запрошено добавление ссылки {receivedText}");
                     comparator.AddNewComparasign(telegram_bot, message);
                     return;
                 }
 
                 if (receivedText == "покажи сравнения" || receivedText == "покажи мои сравнения")
                 {
-                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
+                    logger.LogInformation($"Запрошен показ сравнений");
                     comparator.ComparasignFindAllInfo(interaction, interaction.Module[0]);
                     return;
                 }
 
                 if (receivedText.Contains("покажи сравнение") || receivedText.Contains("покажи сравнения") || receivedText.Contains("покажи мои сравнения"))
                 {
-                    Console.WriteLine("[INFO] Начало обоаботки полученного сообщения");
+                    logger.LogInformation($"Запрошен показ сравнений");
                     comparator.ComparasignFindAllInfo(interaction, interaction.Module[2]);
                     return;
                 }
 
                 if(receivedText.Contains("/imei ") && receivedText != "/imei" && receivedText != "/imei ")
                 {
-                    Console.WriteLine("[INFO] запрос на получения информации о Pixel по IMEI");
+                    logger.LogInformation($"Запрошено получение информации о Pixel по IMEI");
                     SpecWriter_HTTP specWriter = new SpecWriter_HTTP();
                     long IMEI = checker.GetIMEI(receivedText);
                     if(IMEI != 0)
