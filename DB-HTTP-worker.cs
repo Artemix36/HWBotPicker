@@ -226,8 +226,15 @@ namespace HardWarePickerBot
                         content = content.Trim('"');
                         content = Regex.Unescape(content);
                         content = content.Replace("\\", "");
-                        Phone foundPhone = JsonConvert.DeserializeObject<Phone>(content);  
-                        return foundPhone;
+                        Phone? foundPhone = JsonConvert.DeserializeObject<Phone>(content);  
+                        if(foundPhone is not null)
+                        {
+                            return foundPhone;
+                        }
+                        else
+                        {
+                            return new Phone();
+                        }
                     }
                     if(res.StatusCode == HttpStatusCode.NotFound)
                     {

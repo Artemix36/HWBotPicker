@@ -93,7 +93,6 @@ namespace HW_picker_bot
             string ErrorMessage = exception.ToString();
             Console.WriteLine(ErrorMessage);
         }
-
         static void OnUpdate(ITelegramBotClient telegram_bot, Update? update, CancellationToken token)
         {
             TGAPI telegram = new TGAPI();
@@ -307,7 +306,7 @@ namespace HW_picker_bot
                 {
                     if(PreviousInteration.Message.Id != interaction.CallbackQuery.Message.Id)
                     {
-
+                        
                     }
                     if(PreviousInteration.Message.Id == interaction.CallbackQuery.Message.Id)
                     {

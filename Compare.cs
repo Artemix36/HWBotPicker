@@ -41,7 +41,7 @@ namespace HWpicker_bot
 
         public void ComparasignFindAllInfo(Interactions interaction, string module) //получение подробной информации о сравнении
         {   
-            if(interaction.Message is not null) //Если пришли с сообщением
+            if(interaction.Message is not null && interaction.Message.Text is not null) //Если пришли с сообщением
             {
                 MessageSending messageSending = new MessageSending();
                 if (module == "one_comp" || module == "all_by_one_comp")
@@ -49,7 +49,7 @@ namespace HWpicker_bot
                     Comparasign[] NeededComparasign = FindExactComaparsign(interaction.Message.Text).Result;
                     if (NeededComparasign is null || NeededComparasign[0] is null)
                     {
-                        tg.SendUserLog("[ERROR] Сравнения не найдены", "read_comp", NeededComparasign[0], interaction.Message);
+                        tg.SendUserLog("[ERROR] Сравнения не найдены", "read_comp", new Comparasign(), interaction.Message);
                         return;
                     }
                     if (NeededComparasign.Length == 1)
@@ -71,7 +71,7 @@ namespace HWpicker_bot
                 }
             }
 
-            if (interaction.CallbackQuery is not null) //Если пришли по кнопке
+            if (interaction.CallbackQuery is not null && interaction.CallbackQuery.Data is not null ) //Если пришли по кнопке
             {
                 CallBackEditing callBackEditing = new CallBackEditing();
                 if (module == "one_comp" || module == "all_by_one_comp") 
@@ -181,8 +181,8 @@ namespace HWpicker_bot
                         {
                             phoneComparisons[0].Phone1 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone1);
                             phoneComparisons[0].Phone2 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone2);
+                            return phoneComparisons;
                         }
-                        return phoneComparisons;
                     }
                     return new Comparasign[1];
                 }
@@ -208,8 +208,8 @@ namespace HWpicker_bot
                         {
                             phoneComparisons[0].Phone1 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone1);
                             phoneComparisons[0].Phone2 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone2);
+                            return phoneComparisons;
                         }
-                        return phoneComparisons;
                     }
                     return new Comparasign[1];
                 }
