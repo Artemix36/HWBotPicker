@@ -86,7 +86,7 @@ namespace HardWarePickerBot
             client.Timeout = new TimeSpan(0, 0, 50);
             try
             {
-                var msg1 = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:5129/api/Pixel/IMEIcheck/{IMEI}");
+                var msg1 = new HttpRequestMessage(HttpMethod.Get, $"http://localhost:8081/api/Pixel/IMEIcheck/{IMEI}");
                 var res = await client.SendAsync(msg1);
                 var content1 = await res.Content.ReadAsStringAsync();
                 Console.WriteLine($"[INFO] Получен ответ от Scraper'а: {content1}");
