@@ -7,6 +7,7 @@ using Telegram.Bot.Types.Enums;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot.Polling;
 using YAMLvarsReader;
+using Microsoft.Extensions.Configuration;
 
 namespace HW_picker_bot
 {
@@ -43,11 +44,13 @@ namespace HW_picker_bot
             });
             logger = loggerFactory.CreateLogger("Program");
             logger.LogInformation($"Configuration started. Starting bot");   
-            BotVars botVars = new BotVars();
-            YamlReader reader = new YamlReader();
-            botVars = reader.ReadVars();
+            string path = "var.json";
+            
             try
             {
+                IConfiguration configuration = new ConfigurationBuilder().AddJsonFile(path, optional: false, reloadOnChange: true).Build();
+                BotVars? botVars = configuration.Get<BotVars>();
+
                 if(botVars.TGtoken != "not found" && botVars.DBBaseURL is not null)
                 {
                     TelegramBotClient telegram_bot = new TelegramBotClient(botVars.TGtoken);

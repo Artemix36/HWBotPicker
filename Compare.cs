@@ -183,6 +183,10 @@ namespace HWpicker_bot
                             phoneComparisons[0].Phone2 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone2);
                             return phoneComparisons;
                         }
+                        if(phoneComparisons is not null && phoneComparisons.Length != 1)
+                        {
+                            return phoneComparisons;
+                        }
                     }
                     return new Comparasign[1];
                 }
@@ -208,6 +212,10 @@ namespace HWpicker_bot
                         {
                             phoneComparisons[0].Phone1 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone1);
                             phoneComparisons[0].Phone2 = await specWriter_HTTP.GetCameraSpec(phoneComparisons[0].Phone2);
+                            return phoneComparisons;
+                        }
+                        if(phoneComparisons is not null && phoneComparisons.Length != 1)
+                        {
                             return phoneComparisons;
                         }
                     }
