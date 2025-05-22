@@ -1,8 +1,3 @@
-using Telegram.Bot;
-using Telegram.Bot.Exceptions;
-using Telegram.Bot.Requests;
-using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using HWPickerClassesLibrary;
 

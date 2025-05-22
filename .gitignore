@@ -12,4 +12,5 @@ AssemblyInfo.cs
 /.vs/HWPicker_NewDotNet/v17/.futdcache.v2
 /.vs/ProjectEvaluation
 var.yaml
+var.json
 .DS_Store
